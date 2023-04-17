@@ -56,6 +56,7 @@ typedef struct {
   uint8_t version;
 } CPXRouting_t;
 
+
 // This struct contains routing information in a packed format. This struct
 // should mainly be used to serialize data when tranferring. Unpacked formats
 // should be preferred in application code.
@@ -97,5 +98,7 @@ typedef struct {
 void cpxInitRoute(const CPXTarget_t source, const CPXTarget_t destination, const CPXFunction_t function, CPXRouting_t* route);
 
 void cpxInit();
+
+void cpxGetRxPacket(CPXPacket_t* packet);
 
 bool cpxCheckVersion(uint8_t version);

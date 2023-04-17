@@ -1,0 +1,2 @@
+obj-y += app_comm.o
+obj-y += communicate.o

@@ -91,8 +91,10 @@ static uart_transport_packet_t uartRxp;
 
 static EventGroupHandle_t evGroup;
 /* Used to signal when ESP has said clear-to-send */
+/* ESP has already prepared to receive from uart2 */
 #define ESP_CTS_EVENT (1 << 0)
 /* Used to signal when we should tell ESP it's clear-to-send */
+/* We have already prepared to send to uart2 */
 #define ESP_CTR_EVENT (1 << 1)
 /* Used to signal that there are packets in the outgoing TX queue */
 #define ESP_TXQ_EVENT (1 << 2)
@@ -108,6 +110,9 @@ static bool shutdownTransport = false;
 
 static bool isInit = false;
 
+/** Used to calculate the CRC by xor'ing all bytes in the packet
+ *  CRC is a uint8_t, so the result is the same as the xor of all bytes
+*/
 static uint8_t calcCrc(const uart_transport_packet_t* packet) {
   const uint8_t* start = (const uint8_t*) packet;
   const uint8_t* end = &packet->payload[packet->payloadLength];
@@ -121,6 +126,7 @@ static uint8_t calcCrc(const uart_transport_packet_t* packet) {
 }
 
 static void assemblePacket(const CPXPacket_t *packet, uart_transport_packet_t * txp) {
+  //make sure that the packet is valid(size, address, etc.)
   ASSERT((packet->route.destination >> 4) == 0);
   ASSERT((packet->route.source >> 4) == 0);
   ASSERT((packet->route.function >> 8) == 0);
@@ -145,25 +151,32 @@ static void CPX_UART_RX(void *param)
     uartRxp.start = 0x00;
     do
     {
+      // Wait for start byte:0xFF
       uart2GetDataWithTimeout(1, &uartRxp.start, M2T(200));
     } while (uartRxp.start != 0xFF && shutdownTransport == false);
 
     if (uartRxp.start == 0xFF) {
+      //start byte received, read payload length
+      //if payload is not over, block until payload is received
       uart2GetData(1, &uartRxp.payloadLength);
 
       if (uartRxp.payloadLength == 0)
       {
+        //if remaining payload is 0, then Set CTS event means that ESP is ready to receive data
         xEventGroupSetBits(evGroup, ESP_CTS_EVENT);
       }
       else
       {
+        //otherwise, read the payload
         uart2GetData(uartRxp.payloadLength, (uint8_t*) &uartRxp.payload);
 
         uint8_t crc;
         uart2GetData(1, &crc);
         ASSERT(crc == calcCrc(&uartRxp));
         ASSERT(cpxCheckVersion(uartRxp.routablePayload.route.version));
+        //send the packet to the queue
         xQueueSend(uartRxQueue, &uartRxp, portMAX_DELAY);
+        //set CTR event to tell ESP that we are ready to receive data
         xEventGroupSetBits(evGroup, ESP_CTR_EVENT);
       }
     }
@@ -198,8 +211,10 @@ static void CPX_UART_TX(void *param)
   {
     // If we have nothing to send then wait, either for something to be
     // queued or for a request to send CTR
+    // if nothing is queued, then send CTR,means if no data needed to be sent, send next
     if (uxQueueMessagesWaiting(uartTxQueue) == 0)
     {
+      //wait for any event occurs
       evBits = xEventGroupWaitBits(evGroup,
                                    ESP_CTR_EVENT | ESP_TXQ_EVENT | DEINIT_EVENT,
                                    pdTRUE,  // Clear bits before returning
@@ -236,7 +251,7 @@ static void CPX_UART_TX(void *param)
   xEventGroupSetBits(evGroup, TX_DEINIT_EVENT);
   vTaskDelete(NULL);
 }
-
+// Send a CPX packet via the UART transport,This will send a CPX packet, packing it according to the specification for the link
 void cpxUARTTransportSend(const CPXRoutablePacket_t* packet) {
   ASSERT(isInit == true && shutdownTransport == false);
   ASSERT(packet);
