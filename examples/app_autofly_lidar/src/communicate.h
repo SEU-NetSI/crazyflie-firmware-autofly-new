@@ -42,7 +42,7 @@ typedef struct
     coordinate_t endPoint;
 } explore_resp_payload_t;
 
-void ListeningInit();
+
 bool sendMappingRequest(mapping_req_payload_t* mappingRequestPayloadPtr, uint8_t mappingRequestPayloadLength, uint16_t mappingRequestSeq);
 bool sendExploreRequest(explore_req_payload_t* exploreRequestPayloadPtr, uint16_t exploreRequestSeq);
 #endif

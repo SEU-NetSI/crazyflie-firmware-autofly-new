@@ -13,27 +13,7 @@
 
 #include "communicate.h"
 
-void P2PCallbackHandler(P2PPacket *p)
-{
-    // Parse the data from the other crazyflie and print it
-    DEBUG_PRINT("[LiDAR-STM32]Callback called!");
-    uint8_t rssi = p->rssi;
-    uint8_t sourceId = p->data[0];
-    uint8_t respType = p->data[1];
-    uint16_t respSeq = p->data[2];
 
-    static coordinate_t responsePayload[RESPONSE_PAYLOAD_LENGTH];
-    memcpy(responsePayload, &p->data[3], sizeof(coordinate_t) * RESPONSE_PAYLOAD_LENGTH);
-    
-    // TODO Listened Msg Process for Mtr
-    DEBUG_PRINT("[LiDAR-STM32]Receive P2P response from: %d, RSSI: -%d dBm, respType: %d, seq: %d\n", sourceId, rssi, respType, respSeq);
-}
-
-void ListeningInit()
-{
-    // Register the callback function so that the CF can receive packets as well.
-    p2pRegisterCB(P2PCallbackHandler);
-}
 
 bool sendMappingRequest(mapping_req_payload_t* mappingRequestPayloadPtr, uint8_t mappingRequestPayloadLength, uint16_t mappingRequestSeq) 
 {
@@ -68,8 +48,9 @@ bool sendExploreRequest(explore_req_payload_t* exploreRequestPayloadPtr, uint16_
     // Assemble the packet
     packet.data[0] = sourceId;
     packet.data[1] = (uint8_t)EXPLORE_REQ;
-    packet.data[2] = exploreRequestSeq;
-    memcpy(&packet.data[3], exploreRequestPayloadPtr, sizeof(explore_req_payload_t));
+    packet.data[2] = exploreRequestSeq >> 8;
+    packet.data[3] = exploreRequestSeq & 0xff;
+    memcpy(&packet.data[4], exploreRequestPayloadPtr, sizeof(explore_req_payload_t));
     // 1b for sourceId, 2b for exploreRequestSeq, 6b for coordinate_t
     packet.size = sizeof(sourceId) + sizeof(exploreRequestSeq) + sizeof(explore_req_payload_t);
     // Send the P2P packet
