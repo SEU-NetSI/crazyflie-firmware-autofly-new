@@ -2,6 +2,7 @@
 #define __COMMUNICATE_H__
 #define DEBUG_MODULE "P2P"
 #include "config_autofly.h"
+#include "auxiliary_tool.h"
 
 #define MAPPING_REQ 1
 #define EXPLORE_REQ 2
@@ -26,11 +27,9 @@ typedef struct
 
 typedef struct
 {
-    float data[6];
-    float roll;
-    float pitch;
-    float yaw;
-} example_measure_t;
+    coordinate_pair_t coordinatePair;
+    uint8_t mergedNums;
+} mapping_req_payload_t;
 
 typedef struct
 {
@@ -38,8 +37,12 @@ typedef struct
     example_measure_t measurement;
 } explore_req_payload_t;
 
+typedef struct
+{
+    coordinate_t endPoint;
+} explore_resp_payload_t;
+
 void ListeningInit();
-bool sendMappingRequest(coordinate_pair_t* mappingRequestPayloadPtr, uint8_t mappingRequestPayloadLength, uint16_t mappingRequestSeq);
+bool sendMappingRequest(mapping_req_payload_t* mappingRequestPayloadPtr, uint8_t mappingRequestPayloadLength, uint16_t mappingRequestSeq);
 bool sendExploreRequest(explore_req_payload_t* exploreRequestPayloadPtr, uint16_t exploreRequestSeq);
-bool sendPathRequest(coordinate_pair_t* pathRequestPayloadPtr, uint16_t pathRequestSeq);
 #endif

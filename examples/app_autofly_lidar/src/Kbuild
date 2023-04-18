@@ -1,2 +1,3 @@
 obj-y += communicate.o
 obj-y += main_lidar.o
+obj-y += auxiliary_tool.o
