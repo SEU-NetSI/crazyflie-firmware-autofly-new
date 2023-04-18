@@ -1,7 +1,10 @@
 #ifndef __COMMUNICATE_H__
 #define __COMMUNICATE_H__
+#include "stdlib.h"
+#include "stdint.h"
+#include "stdbool.h"
+#include "measure_tool.h"
 #define DEBUG_MODULE "P2P"
-#include "auxiliary_tool.h"
 
 #define MAPPING_REQ 1
 #define EXPLORE_REQ 2
@@ -13,7 +16,7 @@
 #define MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT 4
 #define MAPPING_REQUEST_PAYLOAD_LENGTH_STATIC 4
 #define MAPPING_REQUEST_PAYLOAD_LENGTH_MOVING 1
-#deifne UAV_LIDAR_ID 0x00
+#define UAV_LIDAR_ID 0x00
 #define UAV_COMPUTING_ID 0x00
 
 typedef struct
@@ -69,6 +72,7 @@ typedef struct
     explore_resp_payload_t exploreResponsePayload;
 } explore_resp_packet_t;
 
+uint8_t getSourceId();
 bool sendMappingRequest(mapping_req_payload_t* mappingRequestPayloadPtr, uint8_t mappingRequestPayloadLength, uint16_t mappingRequestSeq);
 bool sendExploreRequest(explore_req_payload_t* exploreRequestPayloadPtr, uint16_t exploreRequestSeq);
 #endif

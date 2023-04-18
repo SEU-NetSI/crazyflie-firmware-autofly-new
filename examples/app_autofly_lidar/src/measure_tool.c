@@ -1,7 +1,13 @@
+#include "stdlib.h"
+#include "stdbool.h"
+#include "debug.h"
+#include <stdint.h>
+
+#include "log.h"
+#include "math.h"
 #include "measure_tool.h"
-#include "range.h"
 #include "config_autofly.h"
-#include "communicate.h"
+
 
 void get_measurement(example_measure_t *measurement,coordinateF_t* cureent_point)
 {
@@ -12,14 +18,14 @@ void get_measurement(example_measure_t *measurement,coordinateF_t* cureent_point
     measurement->data[2] = logGetFloat(logGetVarId("range", "left")) / 10;
     measurement->data[3] = logGetFloat(logGetVarId("range", "right")) / 10;
 
-    if (start_pointF.z < TOP)
-        measurement.data[4] = TOP - start_pointF.z;
+    if (cureent_point->z < TOP)
+        measurement->data[4] = TOP - cureent_point->z;
     else
-        measurement.data[4] = 0;
-    if (start_pointF.z > BOTTOM)
-        measurement.data[5] = start_pointF.z - BOTTOM;
+        measurement->data[4] = 0;
+    if (cureent_point->z > BOTTOM)
+        measurement->data[5] = cureent_point->z - BOTTOM;
     else
-        measurement.data[5] = 0;
+        measurement->data[5] = 0;
 
     measurement->pitch = logGetFloat(logGetVarId("stabilizer", "pitch"));
     measurement->roll = logGetFloat(logGetVarId("stabilizer", "roll"));

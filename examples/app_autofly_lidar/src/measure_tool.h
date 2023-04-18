@@ -1,4 +1,4 @@
-#include "communicate.h"
+#pragma once
 #include "range.h"
 typedef struct
 {
