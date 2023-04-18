@@ -24,18 +24,17 @@ void P2PCallbackHandler(P2PPacket *p)
     // Parse common data
     uint8_t sourceId = p->data[0];
     uint8_t reqType = p->data[1];
-    uint16_t seq = p->data[2];
+    uint16_t seq = (p->data[2]<<8)|(p->data[3]);
     uint8_t rssi = p->rssi;
 
     if (reqType == MAPPING_REQ) {
-        uint8_t mappingRequestPayloadLength = p->data[3];
+        uint8_t mappingRequestPayloadLength = p->data[4];
         coordinate_pair_t mappingRequestPayload[mappingRequestPayloadLength];
-        memcpy(mappingRequestPayload, &p->data[4], sizeof(coordinate_pair_t)*mappingRequestPayloadLength);
+        memcpy(mappingRequestPayload, &p->data[5], sizeof(coordinate_pair_t)*mappingRequestPayloadLength);
         DEBUG_PRINT("[STM32-Edge]Receive P2P mapping request from: %d, RSSI: -%d dBm, seq: %d, payloadLength: %d\n", sourceId, rssi, seq, mappingRequestPayloadLength);
         DEBUG_PRINT("[STM32-Edge]First coordinate pair: (%d, %d, %d), (%d, %d, %d)\n",
             mappingRequestPayload[0].startPoint.x, mappingRequestPayload[0].startPoint.y, mappingRequestPayload[0].startPoint.z,
             mappingRequestPayload[0].endPoint.x, mappingRequestPayload[0].endPoint.y, mappingRequestPayload[0].endPoint.z);
-        
         //Send msg to GAP8
         CPXPacket_t cpxPacket;
         cpxInitRoute(CPX_T_STM32, CPX_T_GAP8, CPX_F_APP, &cpxPacket.route);
@@ -48,7 +47,11 @@ void P2PCallbackHandler(P2PPacket *p)
         bool flag = cpxSendPacketBlockingTimeout(&cpxPacket, 1000);
         DEBUG_PRINT("[STM32-Edge]CPX Forward mapping request %s, from: %d, seq: %d\n\n", flag == false ? "timeout" : "success", sourceId, seq);
     } else {
-        DEBUG_PRINT("[STM32-Edge]Receive P2P other request from: %d, RSSI: -%d dBm, seq: %d, reqType: %d\n", sourceId, rssi, seq, reqType);
+        coordinate_t coords[1] = {0};
+        //此处代码等待确定
+        
+        memcpy(ExploreRequestPayload, &p->data[5], sizeof(coordinate_pair_t) * ExploreRequestPayloadLength);
+        DEBUG_PRINT("[STM32-Edge]Receive P2P Explore request from: %d, RSSI: -%d dBm, seq: %d, reqType: %d\n", sourceId, rssi, seq, reqType);
     }
 }
 
@@ -103,12 +106,12 @@ void ProcessAndTransfer(){
     DEBUG_PRINT("TEST: sourceId is %d\n",rxPacket->route.source);
     uint8_t reqType = rxPacket->data[1];
     DEBUG_PRINT("TEST: reqType is %d\n", reqType);
-    uint16_t seq = rxPacket->data[2];
-    uint8_t datalength = rxPacket->data[3];
+    uint16_t seq = (rxPacket->data[2]<<8)|(rxPacket->data[3]);
+    uint8_t datalength = rxPacket->data[4];
     DEBUG_PRINT("TEST: datalength is %d\n", datalength);
     DEBUG_PRINT("TEST: data[5] is %d\n", rxPacket->data[5]);
     
-    memcpy(buffer, &rxPacket->data[4], sizeof(uint8_t)*datalength);
+    memcpy(buffer, &rxPacket->data[5], sizeof(uint8_t)*datalength);
     uint16_t x=buffer[0]<<8|buffer[1];
     uint16_t y=buffer[2]<<8|buffer[3];
     uint16_t z=buffer[4]<<8|buffer[5];
