@@ -1,5 +1,5 @@
+#include "communicate.h"
 #include "range.h"
-
 typedef struct
 {
     float x;
@@ -15,9 +15,12 @@ typedef struct
     float yaw;
 } example_measure_t;
 
-void get_measurement(example_measure_t *measurement);
-bool cal_Point(example_measure_t *measurement, coordinateF_t *start_point, rangeDirection_t dir, coordinateF_t *res);
-//rotate
+void get_measurement(example_measure_t *measurement,coordinateF_t* cureent_point);
+void get_Current_point(coordinateF_t* cureent_point);
+
+bool cal_Point(example_measure_t* measurement,coordinateF_t* start_point,rangeDirection_t dir,coordinateF_t* res); 
+
 coordinateF_t rot(float roll, float pitch, float yaw, coordinateF_t* origin, coordinateF_t* point);
 void determine_threshold(coordinateF_t *point);
 void dot(float A[][3], float B[][1]);
+

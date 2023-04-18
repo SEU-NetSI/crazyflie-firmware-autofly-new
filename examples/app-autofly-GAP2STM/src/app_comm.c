@@ -23,8 +23,6 @@
 #include "cpx.h"
 #include "crtp.h"
 
-
-
 void appMain(){
 
     //vTaskDelay(M2T(20000));

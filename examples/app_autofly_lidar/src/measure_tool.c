@@ -1,10 +1,9 @@
-#include <stdbool.h>
-#include "math.h"
-#include "log.h"
-#include "auxiliary_tool.h"
+#include "measure_tool.h"
+#include "range.h"
 #include "config_autofly.h"
+#include "communicate.h"
 
-void get_measurement(example_measure_t *measurement)
+void get_measurement(example_measure_t *measurement,coordinateF_t* cureent_point)
 {
     // distance unit: cm
     measurement->data[0] = logGetFloat(logGetVarId("range", "front")) / 10;
@@ -13,9 +12,24 @@ void get_measurement(example_measure_t *measurement)
     measurement->data[2] = logGetFloat(logGetVarId("range", "left")) / 10;
     measurement->data[3] = logGetFloat(logGetVarId("range", "right")) / 10;
 
+    if (start_pointF.z < TOP)
+        measurement.data[4] = TOP - start_pointF.z;
+    else
+        measurement.data[4] = 0;
+    if (start_pointF.z > BOTTOM)
+        measurement.data[5] = start_pointF.z - BOTTOM;
+    else
+        measurement.data[5] = 0;
+
     measurement->pitch = logGetFloat(logGetVarId("stabilizer", "pitch"));
     measurement->roll = logGetFloat(logGetVarId("stabilizer", "roll"));
     measurement->yaw = logGetFloat(logGetVarId("stabilizer", "yaw"));
+}
+
+void get_Current_point(coordinateF_t* cureent_point){
+    cureent_point->x = 100 * logGetFloat(logGetVarId("stateEstimate", "x")) + OFFSET_X;
+    cureent_point->y = 100 * logGetFloat(logGetVarId("stateEstimate", "y")) + OFFSET_Y;
+    cureent_point->z = 100 * logGetFloat(logGetVarId("stateEstimate", "z")) + OFFSET_Z;      
 }
 
 bool cal_Point(example_measure_t *measurement, coordinateF_t *start_point, rangeDirection_t dir, coordinateF_t *res)
@@ -74,6 +88,7 @@ bool cal_Point(example_measure_t *measurement, coordinateF_t *start_point, range
         }
         break;
     default:
+        DEBUG_PRINT("wrong input direction\n");
         break;
     }
     return FALSE;

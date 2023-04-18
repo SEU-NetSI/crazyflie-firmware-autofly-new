@@ -1,9 +1,11 @@
+
 // Autofly_Main config
 #define OFFSET_X 50
 #define OFFSET_Y 50
 #define OFFSET_Z 0
 #define TOP 60 //obstacle top
 #define BOTTOM 30 //obstacle bottom
+#define MOVE_DELAY 600
 
 //octomap config
 #define TREE_CENTER_X 128
