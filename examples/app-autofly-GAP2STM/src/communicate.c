@@ -18,6 +18,51 @@
 #include "cpx_internal_router.h"
 #include "cpx_external_router.h"
 #include "communicate.h"
+
+void P2PCallbackHandler(P2PPacket *p)
+{
+    // Parse common data
+    uint8_t sourceId = p->data[0];
+    uint8_t reqType = p->data[1];
+    uint16_t seq = p->data[2];
+    uint8_t rssi = p->rssi;
+
+    if (reqType == MAPPING_REQ) {
+        uint8_t mappingRequestPayloadLength = p->data[3];
+        coordinate_pair_t mappingRequestPayload[mappingRequestPayloadLength];
+        memcpy(mappingRequestPayload, &p->data[4], sizeof(coordinate_pair_t)*mappingRequestPayloadLength);
+        DEBUG_PRINT("[STM32-Edge]Receive P2P mapping request from: %d, RSSI: -%d dBm, seq: %d, payloadLength: %d\n", sourceId, rssi, seq, mappingRequestPayloadLength);
+        DEBUG_PRINT("[STM32-Edge]First coordinate pair: (%d, %d, %d), (%d, %d, %d)\n",
+            mappingRequestPayload[0].startPoint.x, mappingRequestPayload[0].startPoint.y, mappingRequestPayload[0].startPoint.z,
+            mappingRequestPayload[0].endPoint.x, mappingRequestPayload[0].endPoint.y, mappingRequestPayload[0].endPoint.z);
+        
+        //Send msg to GAP8
+        CPXPacket_t cpxPacket;
+        cpxInitRoute(CPX_T_STM32, CPX_T_GAP8, CPX_F_APP, &cpxPacket.route);
+        cpxPacket.dataLength=1+sizeof(sourceId) + sizeof(reqType) + sizeof(seq) + sizeof(coordinate_pair_t)*mappingRequestPayloadLength;
+        cpxPacket.data[0]=sourceId;
+        cpxPacket.data[1]=reqType;
+        cpxPacket.data[2]=seq;
+        cpxPacket.data[3]=mappingRequestPayloadLength;
+        memcpy(&cpxPacket.data[4], mappingRequestPayload, cpxPacket.dataLength);
+        bool flag = cpxSendPacketBlockingTimeout(&cpxPacket, 1000);
+        DEBUG_PRINT("[STM32-Edge]CPX Forward mapping request %s, from: %d, seq: %d\n\n", flag == false ? "timeout" : "success", sourceId, seq);
+    } else {
+        DEBUG_PRINT("[STM32-Edge]Receive P2P other request from: %d, RSSI: -%d dBm, seq: %d, reqType: %d\n", sourceId, rssi, seq, reqType);
+    }
+}
+
+void CPXForwardInit() {
+    cpxInternalRouterInit();
+    cpxExternalRouterInit();
+    DEBUG_PRINT("[STM32-Edge]CPX Forward Init...\n");
+}
+
+void P2PListeningInit() {
+    p2pRegisterCB(P2PCallbackHandler);
+    DEBUG_PRINT("[STM32-Edge]P2P Listening Init...\n");
+}
+
 bool SendReq(coordinate_t* coords,ReqType mode,uint16_t seq){
 
     // Initialize the p2p packet
@@ -31,11 +76,14 @@ bool SendReq(coordinate_t* coords,ReqType mode,uint16_t seq){
     uint8_t my_id =(uint8_t)((address) & 0x00000000ff);
     packet.data[0]=my_id;
     packet.data[1]=mode;
-    packet.data[2]=seq;
-    memcpy(&packet.data[3], coords, sizeof(coordinate_t)*mode);
+    //取出seq的高8位，放入packet.data[2]    
+    packet.data[2]=(uint8_t)(seq>>8);
+    packet.data[3] = (uint8_t)(seq);
+    memcpy(&packet.data[4], coords, sizeof(coordinate_t) * mode);
 
     // Set the size, which is the amount of bytes the payload with ID and the string
-    packet.size=sizeof(coordinate_t)*mode+sizeof(uint8_t)*2+sizeof(uint16_t);
+    //packet.size=sizeof(coordinate_t)*mode+sizeof(uint8_t)*2+sizeof(uint16_t);
+    packet.size=sizeof(coordinate_t)*mode+sizeof(uint8_t)*4;
     // Send the P2P packet
     DEBUG_PRINT("[STM32-Lidar]ReqType:%d Sent by:%d Seq:%d, First Coord is: (%d,%d,%d)\n",mode,my_id,seq,coords[0].x,coords[0].y,coords[0].z);
     return radiolinkSendP2PPacketBroadcast(&packet);

@@ -46,5 +46,6 @@ typedef struct
 bool SendReq(coordinate_t *coords, ReqType mode, uint16_t seq);
 void ProcessAndTransfer();
 void P2PListeningInit();
-//bool SendReq(coordinate_t* coords,ReqType mode);
+void CPXForwardInit();
+// bool SendReq(coordinate_t* coords,ReqType mode);
 #endif

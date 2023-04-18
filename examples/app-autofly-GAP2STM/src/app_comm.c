@@ -29,12 +29,13 @@ void appMain(){
 
     //vTaskDelay(M2T(20000));
     //create test coords
+    P2PListeningInit();
     cpxInit();
     cpxInternalRouterInit();
     cpxExternalRouterInit();
     while(1)
     {
         ProcessAndTransfer();
-        vTaskDelay(M2T(1000));  
+        vTaskDelay(M2T(100));  
     }
 }
