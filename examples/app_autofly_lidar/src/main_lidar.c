@@ -11,55 +11,94 @@
 #include "cpx_internal_router.h"
 #include "cpx_external_router.h"
 
-#include "auxiliary_tool.h"
-#include "config_autofly.h"
 #include "communicate.h"
 
+#define DEBUG_PRINT_ENABLED 1
+
 // handle mapping request
-coordinate_pair_t mappingRequestPayload[MAPPING_REQUEST_PAYLOAD_LENGTH];
+mapping_req_payload_t mappingRequestPayload[MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT];
 uint8_t mappingRequestPayloadCur = 0;
 uint16_t mappingRequestSeq = 0;
-void appendMappingRequestPayload(coordinate_t* startPoint, coordinate_t* endPoint)
+
+bool isSameNode(coordinate_t* coordinate1, coordinate_t* coordinate2)
 {
-    mappingRequestPayload[mappingRequestPayloadCur].startPoint = *startPoint;
-    mappingRequestPayload[mappingRequestPayloadCur].endPoint = *endPoint;
+    return (coordinate1->x / TREE_RESOLUTION == coordinate2->x / TREE_RESOLUTION) && 
+        (coordinate1->y / TREE_RESOLUTION == coordinate2->y / TREE_RESOLUTION) && 
+        (coordinate1->z / TREE_RESOLUTION == coordinate2->z / TREE_RESOLUTION);
+}
+
+void appendMappingRequestPayload(coordinate_t* startPoint, coordinate_t* endPoint, uint8_t payloadLengthAdaptive)
+{
+    // merge coordinatePair
+    for (int i = 0; i < mappingRequestPayloadCur; i++)
+    {
+        if (isSameNode(startPoint, &mappingRequestPayload[i].coordinatePair.startPoint) && 
+            isSameNode(endPoint, &mappingRequestPayload[i].coordinatePair.endPoint))
+        {
+            mappingRequestPayload[i].mergedNums++;
+            if (mappingRequestPayload[i].mergedNums < (LOG_ODDS_OCCUPIED - LOG_ODDS_FREE) / LOG_ODDS_DIFF_STEP) {
+                return;
+            }
+        }
+    }
+
+    // append coordinatePair to payload
+    mappingRequestPayload[mappingRequestPayloadCur].coordinatePair.startPoint = *startPoint;
+    mappingRequestPayload[mappingRequestPayloadCur].coordinatePair.endPoint = *endPoint;
+    mappingRequestPayload[mappingRequestPayloadCur].mergedNums = 1;
     mappingRequestPayloadCur++;
 
-    if (mappingRequestPayloadCur == MAPPING_REQUEST_PAYLOAD_LENGTH)
+    if (mappingRequestPayloadCur >= MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT || mappingRequestPayloadCur >= payloadLengthAdaptive)
     {
+        // package explore request
         mappingRequestSeq++;
-        bool flag = sendMappingRequest(mappingRequestPayload, MAPPING_REQUEST_PAYLOAD_LENGTH, mappingRequestSeq);
+        bool flag = sendMappingRequest(mappingRequestPayload, mappingRequestPayloadCur, mappingRequestSeq);
         mappingRequestPayloadCur = 0;
-        DEBUG_PRINT("[STM32-LiDAR]Send mapping request %s, seq: %d, payloadLength: %d\n",flag == false ? "Failed" : "Successfully", mappingRequestSeq, MAPPING_REQUEST_PAYLOAD_LENGTH);
-        DEBUG_PRINT("[STM32-LiDAR]First coordinate pair: (%d, %d, %d), (%d, %d, %d)\n", 
-            mappingRequestPayload[0].startPoint.x, mappingRequestPayload[0].startPoint.y, mappingRequestPayload[0].startPoint.z,
-            mappingRequestPayload[0].endPoint.x, mappingRequestPayload[0].endPoint.y, mappingRequestPayload[0].endPoint.z);
+
+        // print debug info
+        DEBUG_PRINT("[LiDAR-STM32]Send mapping request %s, seq: %d, payloadLength: %d\n", 
+            flag == false ? "Failed" : "Successfully", mappingRequestSeq, mappingRequestPayloadCur);
+        if (DEBUG_PRINT_ENABLED)
+        {
+            DEBUG_PRINT("[LiDAR-STM32]Mapping request payload: \n");
+            for (int i = 0; i < mappingRequestPayloadCur; i++)
+            {
+                DEBUG_PRINT("[LiDAR-STM32]Coordinate pair %d: (%d, %d, %d), (%d, %d, %d), mergedNums: %d\n", 
+                    i, 
+                    mappingRequestPayload[i].coordinatePair.startPoint.x, 
+                    mappingRequestPayload[i].coordinatePair.startPoint.y, 
+                    mappingRequestPayload[i].coordinatePair.startPoint.z,
+                    mappingRequestPayload[i].coordinatePair.endPoint.x, 
+                    mappingRequestPayload[i].coordinatePair.endPoint.y, 
+                    mappingRequestPayload[i].coordinatePair.endPoint.z,
+                    mappingRequestPayload[i].mergedNums);
+                vTaskDelay(50);
+            }
+        }
     }
 }
 
 // handle explore request
 uint16_t exploreRequestSeq = 0;
-void setExploreRequestPayload(coordinate_t* startPoint)
+void setExploreRequestPayload(coordinate_t* startPoint, example_measure_t* measurement)
 {
+    // package explore request
     exploreRequestSeq++;
-    bool flag = sendExploreRequest(startPoint, exploreRequestSeq);
-    DEBUG_PRINT("[STM32-LiDAR]Send explore request %s, seq: %d\n",flag == false ? "Failed" : "Successfully", exploreRequestSeq);
-    DEBUG_PRINT("[STM32-LiDAR]startPoint coordinate: (%d, %d, %d)\n", startPoint[0].x, startPoint[0].y, startPoint[0].z);
-}
+    explore_req_payload_t exploreRequestPayload = {*startPoint, *measurement};
+    bool flag = sendExploreRequest(&exploreRequestPayload, exploreRequestSeq);
 
-// handle path request
-uint16_t pathRequestSeq = 0;
-void setPathRequestPayload(coordinate_t* startPoint, coordinate_t* endPoint)
-{
-    pathRequestSeq++;
-    coordinate_pair_t pathRequestPayload;
-    pathRequestPayload.startPoint = *startPoint;
-    pathRequestPayload.endPoint = *endPoint;
-    bool flag = sendPathRequest(&pathRequestPayload, pathRequestSeq);
-    DEBUG_PRINT("[STM32-LiDAR]Send path request %s, seq: %d\n",flag == false ? "Failed" : "Successfully", pathRequestSeq);
-    DEBUG_PRINT("[STM32-LiDAR]startPoint: (%d, %d, %d), endPoint: (%d, %d, %d)\n", 
-        startPoint[0].x, startPoint[0].y, startPoint[0].z, 
-        endPoint[0].x, endPoint[0].y, endPoint[0].z);
+    // print debug info
+    DEBUG_PRINT("[LiDAR-STM32]Send explore request %s, seq: %d\n", 
+        flag == false ? "Failed" : "Successfully", exploreRequestSeq);
+    if (DEBUG_PRINT_ENABLED)
+    {
+        DEBUG_PRINT("[LiDAR-STM32]Explore request payload: startPoint: (%d, %d, %d), measurement: (%.2f, %.2f, %.2f, %.2f, %.2f, %.2f), (%.2f, %.2f, %.2f)\n", 
+            exploreRequestPayload.startPoint.x, exploreRequestPayload.startPoint.y, exploreRequestPayload.startPoint.z, 
+            (double)exploreRequestPayload.measurement.data[0], (double)exploreRequestPayload.measurement.data[1], (double)exploreRequestPayload.measurement.data[2],
+            (double)exploreRequestPayload.measurement.data[3], (double)exploreRequestPayload.measurement.data[4], (double)exploreRequestPayload.measurement.data[5],
+            (double)exploreRequestPayload.measurement.yaw, (double)exploreRequestPayload.measurement.pitch, (double)exploreRequestPayload.measurement.roll);
+        vTaskDelay(50);
+    }
 }
 
 void appMain()
@@ -106,7 +145,7 @@ void appMain()
                 endPoint.z = endPointF.z;
 
                 // add (startPoint, endPoint) to mappingRequestPayload
-                appendMappingRequestPayload(&startPoint, &endPoint);
+                appendMappingRequestPayload(&startPoint, &endPoint, MAPPING_REQUEST_PAYLOAD_LENGTH_STATIC);
             }
         }
     }
