@@ -21,11 +21,11 @@ void appMain()
     while(1) {
         CPXPacket_t *cpxRx = (CPXPacket_t *)malloc(sizeof(CPXPacket_t));
         cpxGetRxPacket(cpxRx);
-        uint8_t respType = cpxRx.data[2];
+        uint8_t respType = cpxRx->data[2];
 
         if (respType == EXPLORE_RESP) {
             explore_resp_packet_t exploreResponsePacket;
-            memcpy(&exploreResponsePacket, cpxRx.data, sizeof(explore_resp_packet_t));
+            memcpy(&exploreResponsePacket, cpxRx->data, sizeof(explore_resp_packet_t));
             DEBUG_PRINT("[Edge-STM32]CPX: Receive explore response packet, destinationId: %d, seq: %d\n", 
                 exploreResponsePacket.destinationId, exploreResponsePacket.seq);
             bool flag = sendExploreResponse(&exploreResponsePacket);
