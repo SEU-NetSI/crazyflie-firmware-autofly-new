@@ -11,7 +11,7 @@
 
 #include "communicate.h"
 
-static CPXPacket_t cpxRx;
+//static CPXPacket_t cpxRx;
 
 void appMain()
 {
@@ -19,7 +19,8 @@ void appMain()
     CPXForwardInit();
 
     while(1) {
-        cpxInternalRouterReceiveOthers(&cpxRx);
+        CPXPacket_t *cpxRx = (CPXPacket_t *)malloc(sizeof(CPXPacket_t));
+        cpxGetRxPacket(cpxRx);
         uint8_t respType = cpxRx.data[2];
 
         if (respType == EXPLORE_RESP) {
