@@ -215,14 +215,12 @@ void appMain()
         start_pointI.y = (int)(start_pointF.y);
         start_pointI.z = (int)(start_pointF.z);
         // Receive explore response
-        get_Current_point(&start_pointF);
-        get_measurement(&measurement, &start_pointF);
-        setMapping(&start_pointF, &measurement, MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT);
         if (flag_explore) 
         {
             MoveTo((float)responsePayload.endPoint.x, (float)responsePayload.endPoint.y, (float)responsePayload.endPoint.z);
             // get explore request payload
-            
+            get_Current_point(&start_pointF);
+            get_measurement(&measurement, &start_pointF);
             start_pointI.x = (int)(start_pointF.x);
             start_pointI.y = (int)(start_pointF.y);
             start_pointI.z = (int)(start_pointF.z);
@@ -239,6 +237,7 @@ void appMain()
             // reset time
             time = xTaskGetTickCount();
         }
+        setMapping(&start_pointF, &measurement, MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT);
         // set mapping request payload
     }
 }
