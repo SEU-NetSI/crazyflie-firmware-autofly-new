@@ -19,7 +19,7 @@
 #include "config_autofly.h"
 #include "crtp_commander_high_level.h"
 
-#define DEBUG_PRINT_ENABLED 1
+#define DEBUG_PRINT_ENABLED 0
 
 // handle mapping request
 mapping_req_payload_t mappingRequestPayload[MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT];
