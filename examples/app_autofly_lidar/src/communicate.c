@@ -34,6 +34,7 @@ bool sendMappingRequest(mapping_req_payload_t* mappingRequestPayloadPtr, uint8_t
     mappingReqPacket.mappingRequestPayloadLength = mappingRequestPayloadLength;
     memcpy(&mappingReqPacket.mappingRequestPayload, mappingRequestPayloadPtr, sizeof(mapping_req_payload_t)*mappingRequestPayloadLength);
 
+    DEBUG_PRINT("sizeof(mapping_req_packet_t):%d\n",sizeof(mapping_req_packet_t));
     memcpy(&packet.data, &mappingReqPacket, sizeof(mapping_req_packet_t));
     packet.size = sizeof(mapping_req_packet_t);
     // Send the P2P packet

@@ -5,7 +5,11 @@
 #define OFFSET_Z 0
 #define TOP 60 //obstacle top
 #define BOTTOM 30 //obstacle bottom
-#define MOVE_DELAY 600
+#define DELAY_MOVE 600
+#define DELAY_START 10000
+#define DELAY_MAPPING 300
+#define DELAY_PRINT 50
+#define TIMEOUT_EXPLORE_RESP 1000
 
 //octomap config
 #define TREE_CENTER_X 128
@@ -24,8 +28,5 @@
 #define SENSOR_TH 300
 
 // custom config for app-lidar
-#define MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT 4
-#define MAPPING_REQUEST_PAYLOAD_LENGTH_STATIC 4
-#define MAPPING_REQUEST_PAYLOAD_LENGTH_MOVING 1
 #define TRUE 1
 #define FALSE 0

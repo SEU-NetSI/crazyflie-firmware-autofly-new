@@ -24,7 +24,7 @@
 // handle mapping request
 mapping_req_payload_t mappingRequestPayload[MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT];
 static explore_resp_payload_t responsePayload;
-bool flag_explore = true;
+bool flag_explore = FALSE;
 uint8_t mappingRequestPayloadCur = 0;
 uint16_t mappingRequestSeq = 0;
 uint16_t exploreRequestSeq = 0;
@@ -32,18 +32,43 @@ uint16_t exploreRequestSeq = 0;
 void P2PCallbackHandler(P2PPacket *p)
 {
     // Parse the P2P packet
-    // uint8_t rssi = p->rssi;
+    uint8_t rssi = p->rssi;
     explore_resp_packet_t exploreRespPacket;
     memcpy(&exploreRespPacket, &p->data, sizeof(explore_resp_packet_t));
-    if (exploreRespPacket.destinationId != getSourceId() || exploreRespPacket.packetType != EXPLORE_RESP || exploreRespPacket.seq != exploreRequestSeq)
-    {
+
+    // Ignore unexpected packet
+    if (exploreRespPacket.destinationId != getSourceId()) return;
+    if (exploreRespPacket.packetType != EXPLORE_RESP) {
+        DEBUG_PRINT("[LiDAR-STM32]P2P: Receive packet type: %d, ignore it\n", 
+            exploreRespPacket.packetType);
         return;
     }
-    // DEBUG_PRINT("[LiDAR-STM32]P2P: Receive explore response from: %d, RSSI: -%d dBm, respType: %d, seq: %d\n", 
-    //     exploreRespPacket.sourceId, rssi, exploreRespPacket.packetType, exploreRespPacket.seq);
+    if (exploreRespPacket.seq != exploreRequestSeq) {
+        DEBUG_PRINT("[LiDAR-STM32]P2P: Receive explore response seq: %d, expected: %d, ignore it\n", 
+            exploreRespPacket.seq, 
+            exploreRequestSeq);
+        return;
+    }
     memcpy(&responsePayload, &p->data[5], sizeof(explore_resp_payload_t));
-    flag_explore = true;
-    // TODO:使用 xQueueSend 来将下一步坐标存入队列
+
+    // Print debug info
+    DEBUG_PRINT("[LiDAR-STM32]P2P: Receive explore response from: %d, to: %d, RSSI: -%d dBm, respType: %d, seq: %d\n", 
+        exploreRespPacket.sourceId, 
+        exploreRespPacket.destinationId, 
+        rssi, 
+        exploreRespPacket.packetType, 
+        exploreRespPacket.seq);
+    if (DEBUG_PRINT_ENABLED)
+    {
+        DEBUG_PRINT("[LiDAR-STM32]P2P: Explore response payload: \n");
+        DEBUG_PRINT("[LiDAR-STM32]P2P: endPoint: (%d, %d, %d)\n\n", 
+            responsePayload.endPoint.x, 
+            responsePayload.endPoint.y, 
+            responsePayload.endPoint.z);
+    }
+
+    // Set explore available flag
+    flag_explore = TRUE;
 }
 
 void ListeningInit()
@@ -86,10 +111,11 @@ void appendMappingRequestPayload(coordinate_t* startPoint, coordinate_t* endPoin
         mappingRequestSeq++;
         bool flag = sendMappingRequest(mappingRequestPayload, mappingRequestPayloadCur, mappingRequestSeq);
         mappingRequestPayloadCur = 0;
-
         // print debug info
         DEBUG_PRINT("[LiDAR-STM32]P2P: Send mapping request %s, seq: %d, payloadLength: %d\n", 
-            flag == false ? "Failed" : "Successfully", mappingRequestSeq, mappingRequestPayloadCur);
+            flag == false ? "Failed" : "Successfully", 
+            mappingRequestSeq, 
+            mappingRequestPayloadCur);
         if (DEBUG_PRINT_ENABLED)
         {
             DEBUG_PRINT("[LiDAR-STM32]P2P: Mapping request payload: \n");
@@ -104,7 +130,7 @@ void appendMappingRequestPayload(coordinate_t* startPoint, coordinate_t* endPoin
                     mappingRequestPayload[i].endPoint.y, 
                     mappingRequestPayload[i].endPoint.z,
                     mappingRequestPayload[i].mergedNums);
-                vTaskDelay(50);
+                vTaskDelay(M2T(DELAY_PRINT));
             }
             DEBUG_PRINT("\n");
         }
@@ -114,7 +140,9 @@ void appendMappingRequestPayload(coordinate_t* startPoint, coordinate_t* endPoin
 void MoveTo(float x, float y, float z)
 {   
     crtpCommanderHighLevelGoTo((double)(x - OFFSET_X) / 100, (double)(y - OFFSET_Y) / 100, (double)(z - OFFSET_Z) / 100, 0, 0.5, 0);
-    vTaskDelay(M2T(MOVE_DELAY));
+    // unset explore available flag
+    flag_explore = FALSE;
+    vTaskDelay(M2T(DELAY_MOVE));
 }
 
 // handle explore request
@@ -130,32 +158,33 @@ void setExploreRequestPayload(coordinate_t* startPoint, example_measure_t* measu
         flag == false ? "Failed" : "Successfully", exploreRequestSeq);
     if (DEBUG_PRINT_ENABLED)
     {
-        DEBUG_PRINT("[Edge-STM32]P2P: Explore request payload: \n");
-        DEBUG_PRINT("[Edge-STM32]P2P: startPoint: (%d, %d, %d)\n", 
+        DEBUG_PRINT("[LiDAR-STM32]P2P: Explore request payload: \n");
+        DEBUG_PRINT("[LiDAR-STM32]P2P: startPoint: (%d, %d, %d)\n", 
             exploreRequestPayload.startPoint.x, 
             exploreRequestPayload.startPoint.y, 
             exploreRequestPayload.startPoint.z);
-        DEBUG_PRINT("[Edge-STM32]P2P: data: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n", 
+        DEBUG_PRINT("[LiDAR-STM32]P2P: data: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n", 
             (double)exploreRequestPayload.measurement.data[0], 
             (double)exploreRequestPayload.measurement.data[1], 
             (double)exploreRequestPayload.measurement.data[2], 
             (double)exploreRequestPayload.measurement.data[3], 
             (double)exploreRequestPayload.measurement.data[4], 
             (double)exploreRequestPayload.measurement.data[5]);
-        DEBUG_PRINT("[Edge-STM32]P2P: roll: %.2f, pitch: %.2f, yaw: %.2f\n\n", 
+        DEBUG_PRINT("[LiDAR-STM32]P2P: roll: %.2f, pitch: %.2f, yaw: %.2f\n\n", 
             (double)exploreRequestPayload.measurement.roll, 
             (double)exploreRequestPayload.measurement.pitch, 
             (double)exploreRequestPayload.measurement.yaw);
-        vTaskDelay(50);
+        vTaskDelay(M2T(DELAY_PRINT));
     }
 }
 
 void setMapping(coordinateF_t* currentF, example_measure_t* measurement, uint8_t payloadLengthAdaptive){
-    coordinate_t end_point,start_point;
+    coordinate_t end_point, start_point;
     coordinateF_t item_end;
     start_point.x = (int)(currentF->x);
     start_point.y = (int)(currentF->y);
     start_point.z = (int)(currentF->z);
+
     for (rangeDirection_t dir = rangeFront; dir <= rangeDown; ++dir)
     {
         if (cal_Point(measurement, currentF, dir, &item_end))
@@ -170,34 +199,45 @@ void setMapping(coordinateF_t* currentF, example_measure_t* measurement, uint8_t
 
 void appMain()
 {
-    vTaskDelay(M2T(10000));
+    vTaskDelay(M2T(DELAY_START));
     coordinate_t start_pointI;
     coordinateF_t start_pointF;
     example_measure_t measurement;
     TickType_t time = xTaskGetTickCount();
-    while(1){
-        vTaskDelay(M2T(100));
+
+    while (1) 
+    {
+        vTaskDelay(M2T(DELAY_MAPPING));
+        // get explore request payload
         get_Current_point(&start_pointF);
         get_measurement(&measurement,&start_pointF);
         start_pointI.x = (int)(start_pointF.x);
         start_pointI.y = (int)(start_pointF.y);
         start_pointI.z = (int)(start_pointF.z);
-        if(flag_explore){
+        // Receive explore response
+        if (flag_explore) 
+        {
             MoveTo((float)responsePayload.endPoint.x, (float)responsePayload.endPoint.y, (float)responsePayload.endPoint.z);
-            flag_explore = false;
+            // get explore request payload
             get_Current_point(&start_pointF);
-            get_measurement(&measurement,&start_pointF);
+            get_measurement(&measurement, &start_pointF);
             start_pointI.x = (int)(start_pointF.x);
             start_pointI.y = (int)(start_pointF.y);
             start_pointI.z = (int)(start_pointF.z);
             setExploreRequestPayload(&start_pointI, &measurement);
+            flag_explore = false;
+            // reset time
             time = xTaskGetTickCount();
         }
-        else if(xTaskGetTickCount() - time >= 500){
-            // 超时重发
+        // Not receive explore response and timeout
+        else if (xTaskGetTickCount() - time >= TIMEOUT_EXPLORE_RESP) 
+        {
             setExploreRequestPayload(&start_pointI, &measurement);
+            flag_explore = false;
+            // reset time
             time = xTaskGetTickCount();
         }
         setMapping(&start_pointF, &measurement, MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT);
+        // set mapping request payload
     }
 }
