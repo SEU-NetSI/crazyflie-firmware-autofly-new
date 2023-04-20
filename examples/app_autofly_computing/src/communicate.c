@@ -1,19 +1,38 @@
+// #include <string.h>
+// #include <stdint.h>
+// #include <stdbool.h>
+// #include <stdio.h>
+
+// #include "FreeRTOS.h"
+// #include "task.h"
+// #include "debug.h"
+// #include "radiolink.h"
+// #include "configblock.h"
+
+// #include "cpx_internal_router.h"
+// #include "cpx_external_router.h"
+
+// #include "communicate.h"
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "FreeRTOS.h"
 #include "task.h"
-#include "debug.h"
+
 #include "radiolink.h"
 #include "configblock.h"
 
+#define DEBUG_MODULE "P2P"
+#include "debug.h"
+
+#include "radiolink.h"
+#include "cpx.h"
 #include "cpx_internal_router.h"
 #include "cpx_external_router.h"
-
 #include "communicate.h"
-
 #define DEBUG_PRINT_ENABLED 1
 
 
@@ -50,7 +69,7 @@ void P2PCallbackHandler(P2PPacket *p)
                     mappingRequestPacket.mappingRequestPayload[i].endPoint.y, 
                     mappingRequestPacket.mappingRequestPayload[i].endPoint.z,
                     mappingRequestPacket.mappingRequestPayload[i].mergedNums);
-                vTaskDelay(50);
+                //vTaskDelay(50);
             }
             DEBUG_PRINT("\n");
         }
@@ -87,7 +106,7 @@ void P2PCallbackHandler(P2PPacket *p)
                 (double)exploreRequestPacket.exploreRequestPayload.measurement.roll, 
                 (double)exploreRequestPacket.exploreRequestPayload.measurement.pitch, 
                 (double)exploreRequestPacket.exploreRequestPayload.measurement.yaw);
-            vTaskDelay(50);
+            //vTaskDelay(50);
         }
 
         // Send msg to GAP8
@@ -118,6 +137,5 @@ bool sendExploreResponse(explore_resp_packet_t* exploreResponsePacket)
 void CPXForwardInit() {
     p2pRegisterCB(P2PCallbackHandler);
     DEBUG_PRINT("[Edge-STM32]CPX Forward Init...\n");
-    cpxInternalRouterInit();
-    cpxExternalRouterInit();
+    
 }

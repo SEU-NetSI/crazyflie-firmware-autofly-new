@@ -1,22 +1,31 @@
-#include <string.h>
 #include "stdlib.h"
-
-#include "FreeRTOS.h"
-#include "task.h"
-#include "debug.h"
-#include "system.h"
-#include "app.h"
-
-#include "cpx_internal_router.h"
+#include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
 
 #include "communicate.h"
+#include "aideck.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
-//static CPXPacket_t cpxRx;
+#include "radiolink.h"
+#include "configblock.h"
+
+#define DEBUG_MODULE "P2P"
+#include "debug.h"
+#include "cpx_internal_router.h"
+#include "cpx_external_router.h"
+#include "cpx.h"
+#include "crtp.h"
 
 void appMain()
 {
-    systemWaitStart();
+    //systemWaitStart();
     CPXForwardInit();
+    cpxInit();
+    cpxInternalRouterInit();
+    cpxExternalRouterInit();
 
     while(1) {
         CPXPacket_t *cpxRx = (CPXPacket_t *)malloc(sizeof(CPXPacket_t));

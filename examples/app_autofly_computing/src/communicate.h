@@ -1,3 +1,21 @@
+#include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
+
+#include "FreeRTOS.h"
+#include "task.h"
+
+#include "radiolink.h"
+#include "configblock.h"
+
+
+
+
+#include "radiolink.h"
+#include "cpx.h"
+#include "cpx_internal_router.h"
+#include "cpx_external_router.h"
 #ifndef __COMMUNICATE_H__
 #define __COMMUNICATE_H__
 #define DEBUG_MODULE "P2P"
