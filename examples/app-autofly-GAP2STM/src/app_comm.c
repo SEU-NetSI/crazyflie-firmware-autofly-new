@@ -44,10 +44,6 @@ void appMain()
             bool flag = sendExploreResponse(&exploreResponsePacket);
             DEBUG_PRINT("[Edge-STM32]P2P: Forward explore response %s\n\n", flag == false ? "timeout" : "success");
         } else {
-            DEBUG_PRINT("[Edge-STM32]CPX: Receive unknown packet, data[0]: %d)\n", cpxPacket->data[0]);
-            DEBUG_PRINT("[Edge-STM32]CPX: Receive unknown packet, data[1]: %d)\n", cpxPacket->data[1]);
-            DEBUG_PRINT("[Edge-STM32]CPX: Receive unknown packet, data[2]: %d)\n", cpxPacket->data[2]);
-            DEBUG_PRINT("[Edge-STM32]CPX: Receive unknown packet, data[3]: %d)\n", cpxPacket->data[3]);
             DEBUG_PRINT("[Edge-STM32]CPX: Receive unknown packet, type: %d)\n\n", respType);
         }
         // free(cpxRx);
