@@ -1,4 +1,3 @@
-//#include "communicate.h"
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -33,15 +32,14 @@ void appMain()
         CPXPacket_t *cpxPacket = &cpxRxData;
         cpxGetRxPacket(cpxPacket);
         uint8_t packetType = cpxPacket->data[2];
-        DEBUG_PRINT("[Edge-STM32]CPX: Receive packet, packetType: %d)\n\n", packetType);
+        // DEBUG_PRINT("[Edge-STM32]CPX: Receive packet, packetType: %d)\n\n", packetType);
 
         if (packetType == EXPLORE_RESP) {
             explore_resp_packet_t exploreResponsePacket;
             memcpy(&exploreResponsePacket, cpxPacket->data, sizeof(explore_resp_packet_t));
-            DEBUG_PRINT("[Edge-STM32]CPX: Receive explore response packet, destinationId: %d, seq: %d\n", 
-                exploreResponsePacket.destinationId, exploreResponsePacket.seq);
-            bool flag = sendExploreResponse(&exploreResponsePacket);
-            DEBUG_PRINT("[Edge-STM32]P2P: Forward explore response %s\n\n", flag == false ? "timeout" : "success");
+            // DEBUG_PRINT("[Edge-STM32]CPX: Receive explore response packet, destinationId: %d, seq: %d\n", 
+                // exploreResponsePacket.destinationId, exploreResponsePacket.seq);
+            // DEBUG_PRINT("[Edge-STM32]P2P: Forward explore response %s\n\n", flag == false ? "timeout" : "success");
         } else {
             // DEBUG_PRINT("[Edge-STM32]CPX: Receive unknown packet, type: %d)\n\n", packetType);
         }
