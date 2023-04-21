@@ -40,22 +40,23 @@ void P2PCallbackHandler(P2PPacket *p)
     // Ignore unexpected packet
     if (exploreRespPacket.destinationId != getSourceId()) return;
     if (exploreRespPacket.packetType != EXPLORE_RESP) {
-        DEBUG_PRINT("[LiDAR-STM32]P2P: Receive packet type: %d, ignore it\n", 
-            exploreRespPacket.packetType);
+        // DEBUG_PRINT("[LiDAR-STM32]P2P: Receive packet type: %d, ignore it\n", 
+        //     exploreRespPacket.packetType);
         return;
     }
     if (exploreRespPacket.seq != exploreRequestSeq) {
-        DEBUG_PRINT("[LiDAR-STM32]P2P: Receive explore response seq: %d, expected: %d, ignore it\n", 
-            exploreRespPacket.seq, 
-            exploreRequestSeq);
+        // DEBUG_PRINT("[LiDAR-STM32]P2P: Receive explore response seq: %d, expected: %d, ignore it\n", 
+        //     exploreRespPacket.seq, 
+        //     exploreRequestSeq);
         return;
     }
     if (exploreRequestSeq == lastMoveSeq) {
-        DEBUG_PRINT("[LiDAR-STM32]P2P: Has received explore response seq: %d, ignore it\n",
-            exploreRequestSeq);
+        // DEBUG_PRINT("[LiDAR-STM32]P2P: Has received explore response seq: %d, ignore it\n",
+        //     exploreRequestSeq);
         return;
     }
-    memcpy(&responsePayload, &p->data[5], sizeof(explore_resp_payload_t));
+    responsePayload = exploreRespPacket.exploreResponsePayload;
+    // memcpy(&responsePayload, &p->data[5], sizeof(explore_resp_payload_t));
 
     // Print debug info
     DEBUG_PRINT("[LiDAR-STM32]P2P: Receive explore response from: %d, to: %d, RSSI: -%d dBm, respType: %d, seq: %d\n", 
@@ -63,7 +64,13 @@ void P2PCallbackHandler(P2PPacket *p)
         exploreRespPacket.destinationId, 
         rssi, 
         exploreRespPacket.packetType, 
-        exploreRespPacket.seq);
+        exploreRespPacket.seq
+        );
+    DEBUG_PRINT("endPoint: (%d, %d, %d)\n\n", 
+        exploreRespPacket.exploreResponsePayload.endPoint.x, 
+        exploreRespPacket.exploreResponsePayload.endPoint.y, 
+        exploreRespPacket.exploreResponsePayload.endPoint.z
+        );
     if (DEBUG_PRINT_ENABLED)
     {
         DEBUG_PRINT("[LiDAR-STM32]P2P: Explore response payload: \n");
@@ -118,11 +125,14 @@ void appendMappingRequestPayload(coordinate_t* startPoint, coordinate_t* endPoin
         mappingRequestSeq++;
         bool flag = sendMappingRequest(mappingRequestPayload, mappingRequestPayloadCur, mappingRequestSeq);
         mappingRequestPayloadCur = 0;
+        if(!flag){
+            DEBUG_PRINT("[LiDAR-STM32]P2P: Send mapping request failed\n");
+        }
         // print debug info
-        DEBUG_PRINT("[LiDAR-STM32]P2P: Send mapping request %s, seq: %d, payloadLength: %d\n", 
-            flag == false ? "Failed" : "Successfully", 
-            mappingRequestSeq, 
-            mappingRequestPayloadCur);
+        // DEBUG_PRINT("[LiDAR-STM32]P2P: Send mapping request %s, seq: %d, payloadLength: %d\n", 
+        //     flag == false ? "Failed" : "Successfully", 
+        //     mappingRequestSeq, 
+        //     mappingRequestPayloadCur);
         if (DEBUG_PRINT_ENABLED)
         {
             DEBUG_PRINT("[LiDAR-STM32]P2P: Mapping request payload: \n");
@@ -159,10 +169,12 @@ void setExploreRequestPayload(coordinate_t* startPoint, example_measure_t* measu
     exploreRequestSeq++;
     explore_req_payload_t exploreRequestPayload = {*startPoint, *measurement};
     bool flag = sendExploreRequest(&exploreRequestPayload, exploreRequestSeq);
-
+    if(!flag){
+        DEBUG_PRINT("[LiDAR-STM32]P2P: Send explore request failed\n");
+    }
     // print debug info
-    DEBUG_PRINT("[LiDAR-STM32]P2P: Send explore request %s, seq: %d\n", 
-        flag == false ? "Failed" : "Successfully", exploreRequestSeq);
+    // DEBUG_PRINT("[LiDAR-STM32]P2P: Send explore request %s, seq: %d\n", 
+    //     flag == false ? "Failed" : "Successfully", exploreRequestSeq);
     if (DEBUG_PRINT_ENABLED)
     {
         DEBUG_PRINT("[LiDAR-STM32]P2P: Explore request payload: \n");
