@@ -19,7 +19,7 @@
 #include "config_autofly.h"
 #include "crtp_commander_high_level.h"
 
-#define DEBUG_PRINT_ENABLED 0
+#define DEBUG_PRINT_ENABLED 1
 
 // handle mapping request
 mapping_req_payload_t mappingRequestPayload[MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT];
@@ -28,6 +28,7 @@ bool flag_explore = FALSE;
 uint8_t mappingRequestPayloadCur = 0;
 uint16_t mappingRequestSeq = 0;
 uint16_t exploreRequestSeq = 0;
+uint16_t lastMoveSeq = 0xFFFF;
 
 void P2PCallbackHandler(P2PPacket *p)
 {
@@ -46,6 +47,11 @@ void P2PCallbackHandler(P2PPacket *p)
     if (exploreRespPacket.seq != exploreRequestSeq) {
         DEBUG_PRINT("[LiDAR-STM32]P2P: Receive explore response seq: %d, expected: %d, ignore it\n", 
             exploreRespPacket.seq, 
+            exploreRequestSeq);
+        return;
+    }
+    if (exploreRequestSeq == lastMoveSeq) {
+        DEBUG_PRINT("[LiDAR-STM32]P2P: Has received explore response seq: %d, ignore it\n",
             exploreRequestSeq);
         return;
     }
@@ -219,6 +225,7 @@ void appMain()
         // Receive explore response
         if (flag_explore) 
         {
+            lastMoveSeq = exploreRequestSeq;
             MoveTo((float)responsePayload.endPoint.x, (float)responsePayload.endPoint.y, (float)responsePayload.endPoint.z);
             // get explore request payload
             get_Current_point(&start_pointF);
