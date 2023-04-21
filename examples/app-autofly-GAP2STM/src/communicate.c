@@ -33,14 +33,14 @@
 #include "cpx_internal_router.h"
 #include "cpx_external_router.h"
 #include "communicate.h"
-#define DEBUG_PRINT_ENABLED 1
+#define DEBUG_PRINT_ENABLED 0
 
 
 void P2PCallbackHandler(P2PPacket *p)
 {
     // Parse the P2P packet
-    uint8_t rssi = p->rssi;
-    uint8_t sourceId = p->data[0];
+    // uint8_t rssi = p->rssi;
+    // uint8_t sourceId = p->data[0];
     uint8_t destinationId = p->data[1];
     uint8_t packetType = p->data[2];
     if (destinationId != UAV_COMPUTING_ID)
@@ -51,8 +51,8 @@ void P2PCallbackHandler(P2PPacket *p)
     if (packetType == MAPPING_REQ) {
         mapping_req_packet_t mappingRequestPacket;
         memcpy(&mappingRequestPacket, p->data, sizeof(mapping_req_packet_t));
-        DEBUG_PRINT("[Edge-STM32]P2P: Receive mapping request from: %d, RSSI: -%d dBm, seq: %d, payloadLength: %d\n", 
-            mappingRequestPacket.sourceId, rssi, mappingRequestPacket.seq, mappingRequestPacket.mappingRequestPayloadLength);
+        // DEBUG_PRINT("[Edge-STM32]P2P: Receive mapping request from: %d, RSSI: -%d dBm, seq: %d, payloadLength: %d\n", 
+        //     mappingRequestPacket.sourceId, rssi, mappingRequestPacket.seq, mappingRequestPacket.mappingRequestPayloadLength);
 
         // Print debugging info
         if (DEBUG_PRINT_ENABLED)
@@ -79,13 +79,14 @@ void P2PCallbackHandler(P2PPacket *p)
         cpxInitRoute(CPX_T_STM32, CPX_T_GAP8, CPX_F_APP, &cpxPacket.route);
         memcpy(&cpxPacket.data, &mappingRequestPacket, sizeof(mapping_req_packet_t));
         cpxPacket.dataLength = sizeof(mapping_req_packet_t);
-        bool flag = cpxSendPacketBlockingTimeout(&cpxPacket, 1000);
-        DEBUG_PRINT("[Edge-STM32]CPX: Forward mapping request %s\n\n", flag == false ? "timeout" : "success");
+        cpxSendPacketBlockingTimeout(&cpxPacket, 1000);
+        // bool flag = cpxSendPacketBlockingTimeout(&cpxPacket, 1000);
+        // DEBUG_PRINT("[Edge-STM32]CPX: Forward mapping request %s\n\n", flag == false ? "timeout" : "success");
     } else if (packetType == EXPLORE_REQ) {
         explore_req_packet_t exploreRequestPacket;
         memcpy(&exploreRequestPacket, p->data, sizeof(explore_req_packet_t));
-        DEBUG_PRINT("[Edge-STM32]P2P: Receive explore request from: %d, RSSI: -%d dBm, seq: %d\n", 
-            exploreRequestPacket.sourceId, rssi, exploreRequestPacket.seq);
+        // DEBUG_PRINT("[Edge-STM32]P2P: Receive explore request from: %d, RSSI: -%d dBm, seq: %d\n", 
+        //     exploreRequestPacket.sourceId, rssi, exploreRequestPacket.seq);
         
         // Print debugging info
         if (DEBUG_PRINT_ENABLED)
@@ -114,11 +115,12 @@ void P2PCallbackHandler(P2PPacket *p)
         cpxInitRoute(CPX_T_STM32, CPX_T_GAP8, CPX_F_APP, &cpxPacket.route);
         memcpy(&cpxPacket.data, &exploreRequestPacket, sizeof(explore_req_packet_t));
         cpxPacket.dataLength = sizeof(explore_req_packet_t);
-        bool flag = cpxSendPacketBlockingTimeout(&cpxPacket, 1000);
-        DEBUG_PRINT("[Edge-STM32]CPX: Forward explore request %s\n\n", flag == false ? "timeout" : "success");
+        cpxSendPacketBlockingTimeout(&cpxPacket, 1000);
+        // bool flag = cpxSendPacketBlockingTimeout(&cpxPacket, 1000);
+        // DEBUG_PRINT("[Edge-STM32]CPX: Forward explore request %s\n\n", flag == false ? "timeout" : "success");
     } else {
-        DEBUG_PRINT("[Edge-STM32]P2P: Receive unknown packet from: %d, RSSI: -%d dBm, destinationId: %d, packetType: %d\n\n", 
-            sourceId, rssi, destinationId, packetType);
+        // DEBUG_PRINT("[Edge-STM32]P2P: Receive unknown packet from: %d, RSSI: -%d dBm, destinationId: %d, packetType: %d\n\n", 
+            // sourceId, rssi, destinationId, packetType);
     }
 }
 
@@ -137,5 +139,4 @@ bool sendExploreResponse(explore_resp_packet_t* exploreResponsePacket)
 void CPXForwardInit() {
     p2pRegisterCB(P2PCallbackHandler);
     DEBUG_PRINT("[Edge-STM32]CPX Forward Init...\n");
-    
 }
