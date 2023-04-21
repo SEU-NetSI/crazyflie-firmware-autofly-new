@@ -24,19 +24,18 @@ static CPXPacket_t cpxRxData;
 
 void appMain()
 {
-    //systemWaitStart();
     CPXForwardInit();
     cpxInit();
     cpxInternalRouterInit();
     cpxExternalRouterInit();
 
     while(1) {
-        // CPXPacket_t *cpxRx = (CPXPacket_t *)malloc(sizeof(CPXPacket_t));
         CPXPacket_t *cpxPacket = &cpxRxData;
         cpxGetRxPacket(cpxPacket);
-        uint8_t respType = cpxPacket->data[2];
+        uint8_t packetType = cpxPacket->data[2];
+        DEBUG_PRINT("[Edge-STM32]CPX: Receive packet, packetType: %d)\n\n", packetType);
 
-        if (respType == EXPLORE_RESP) {
+        if (packetType == EXPLORE_RESP) {
             explore_resp_packet_t exploreResponsePacket;
             memcpy(&exploreResponsePacket, cpxPacket->data, sizeof(explore_resp_packet_t));
             DEBUG_PRINT("[Edge-STM32]CPX: Receive explore response packet, destinationId: %d, seq: %d\n", 
@@ -44,9 +43,8 @@ void appMain()
             bool flag = sendExploreResponse(&exploreResponsePacket);
             DEBUG_PRINT("[Edge-STM32]P2P: Forward explore response %s\n\n", flag == false ? "timeout" : "success");
         } else {
-            DEBUG_PRINT("[Edge-STM32]CPX: Receive unknown packet, type: %d)\n\n", respType);
+            // DEBUG_PRINT("[Edge-STM32]CPX: Receive unknown packet, type: %d)\n\n", packetType);
         }
-        // free(cpxRx);
         vTaskDelay(M2T(100));
     }
 }
