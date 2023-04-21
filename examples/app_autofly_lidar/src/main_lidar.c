@@ -73,6 +73,7 @@ void P2PCallbackHandler(P2PPacket *p)
 
 void ListeningInit()
 {
+    DEBUG_PRINT("[LiDAR-STM32]P2P: Listening init\n");
     // Register the callback function so that the CF can receive packets as well.
     p2pRegisterCB(P2PCallbackHandler);
 }
@@ -204,6 +205,7 @@ void appMain()
     coordinateF_t start_pointF;
     example_measure_t measurement;
     TickType_t time = xTaskGetTickCount();
+    ListeningInit();
 
     while (1) 
     {
