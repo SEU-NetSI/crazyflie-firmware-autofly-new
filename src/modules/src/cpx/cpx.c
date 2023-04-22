@@ -92,7 +92,7 @@ static void cpx(void *_param)
   systemWaitStart();
   while (1) {
     cpxInternalRouterReceiveOthers(&cpxRx);
-    DEBUG_PRINT("CPX RX: Message from [0x%02X] to function [0x%02X] (size=%u)\n", cpxRx.route.source, cpxRx.route.function, cpxRx.dataLength);
+    //DEBUG_PRINT("CPX RX: Message from [0x%02X] to function [0x%02X] (size=%u)\n", cpxRx.route.source, cpxRx.route.function, cpxRx.dataLength);
         switch (cpxRx.route.function) {
           case CPX_F_WIFI_CTRL:
             if (cpxRx.data[0] == WIFI_AP_CONNECTED_CMD) {
@@ -146,7 +146,7 @@ static void cpx(void *_param)
             }
             break;
           default:
-            DEBUG_PRINT("Not handling function [0x%02X] from [0x%02X]\n", cpxRx.route.function, cpxRx.route.source);
+            //DEBUG_PRINT("Not handling function [0x%02X] from [0x%02X]\n", cpxRx.route.function, cpxRx.route.source);
         }
   }
 }
