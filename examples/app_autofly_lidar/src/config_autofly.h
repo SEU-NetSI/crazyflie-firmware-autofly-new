@@ -5,10 +5,11 @@
 #define TOP 60 //obstacle top
 #define BOTTOM 30 //obstacle bottom
 #define DELAY_MOVE 600
-#define DELAY_START 10000
+#define DELAY_TAKEOFF 10000
+#define DELAY_START 3000
 #define DELAY_MAPPING 300
 #define DELAY_PRINT 50
-#define TIMEOUT_EXPLORE_RESP 150
+#define TIMEOUT_EXPLORE_RESP 500
 
 //octomap config
 #define TREE_CENTER_X 128

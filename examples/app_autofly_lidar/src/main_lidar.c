@@ -221,6 +221,8 @@ void setMapping(coordinateF_t* currentF, example_measure_t* measurement, uint8_t
 
 void appMain()
 {
+    vTaskDelay(M2T(DELAY_TAKEOFF));
+    crtpCommanderHighLevelTakeoff(0.4, 2.0);
     vTaskDelay(M2T(DELAY_START));
     coordinate_t start_pointI;
     coordinateF_t start_pointF;

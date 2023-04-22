@@ -15,7 +15,10 @@
 
 uint8_t getSourceId()
 {
-    return UAV_LIDAR_ID;
+    uint64_t address = configblockGetRadioAddress();
+    uint8_t sourceId = (uint8_t)((address) & 0x00000000ff);
+    return sourceId;
+    // return UAV_LIDAR_ID;
 }
 
 bool sendMappingRequest(mapping_req_payload_t* mappingRequestPayloadPtr, uint8_t mappingRequestPayloadLength, uint16_t mappingRequestSeq) 
