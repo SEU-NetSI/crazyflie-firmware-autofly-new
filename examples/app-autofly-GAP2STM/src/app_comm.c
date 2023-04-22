@@ -39,6 +39,8 @@ void appMain()
             memcpy(&exploreResponsePacket, cpxPacket->data, sizeof(explore_resp_packet_t));
             // DEBUG_PRINT("[Edge-STM32]CPX: Receive explore response packet, destinationId: %d, seq: %d\n", 
                 // exploreResponsePacket.destinationId, exploreResponsePacket.seq);
+            sendExploreResponse(&exploreResponsePacket);
+            // bool flag = sendExploreResponse(&exploreResponsePacket);
             // DEBUG_PRINT("[Edge-STM32]P2P: Forward explore response %s\n\n", flag == false ? "timeout" : "success");
         } else {
             // DEBUG_PRINT("[Edge-STM32]CPX: Receive unknown packet, type: %d)\n\n", packetType);
