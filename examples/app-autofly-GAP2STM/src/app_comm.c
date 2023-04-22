@@ -37,8 +37,13 @@ void appMain()
         if (packetType == EXPLORE_RESP) {
             explore_resp_packet_t exploreResponsePacket;
             memcpy(&exploreResponsePacket, cpxPacket->data, sizeof(explore_resp_packet_t));
-            // DEBUG_PRINT("[Edge-STM32]CPX: Receive explore response packet, destinationId: %d, seq: %d\n", 
-                // exploreResponsePacket.destinationId, exploreResponsePacket.seq);
+            DEBUG_PRINT("[Edge-STM32]CPX: Receive explore response packet, destinationId: %d, seq: %d\n", 
+                exploreResponsePacket.destinationId, exploreResponsePacket.seq);
+            DEBUG_PRINT("[Edge-STM32]CPX: Explore response payload: \n");
+            DEBUG_PRINT("[Edge-STM32]P2P: endPoint: (%d, %d, %d)\n", 
+                exploreResponsePacket.exploreResponsePayload.endPoint.x,
+                exploreResponsePacket.exploreResponsePayload.endPoint.y,
+                exploreResponsePacket.exploreResponsePayload.endPoint.z);
             sendExploreResponse(&exploreResponsePacket);
             // bool flag = sendExploreResponse(&exploreResponsePacket);
             // DEBUG_PRINT("[Edge-STM32]P2P: Forward explore response %s\n\n", flag == false ? "timeout" : "success");

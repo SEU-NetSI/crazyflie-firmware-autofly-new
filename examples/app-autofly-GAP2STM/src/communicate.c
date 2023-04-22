@@ -39,7 +39,7 @@
 void P2PCallbackHandler(P2PPacket *p)
 {
     // Parse the P2P packet
-    // uint8_t rssi = p->rssi;
+    uint8_t rssi = p->rssi;
     // uint8_t sourceId = p->data[0];
     uint8_t destinationId = p->data[1];
     uint8_t packetType = p->data[2];
@@ -85,9 +85,14 @@ void P2PCallbackHandler(P2PPacket *p)
     } else if (packetType == EXPLORE_REQ) {
         explore_req_packet_t exploreRequestPacket;
         memcpy(&exploreRequestPacket, p->data, sizeof(explore_req_packet_t));
-        // DEBUG_PRINT("[Edge-STM32]P2P: Receive explore request from: %d, RSSI: -%d dBm, seq: %d\n", 
-        //     exploreRequestPacket.sourceId, rssi, exploreRequestPacket.seq);
-        
+        DEBUG_PRINT("[Edge-STM32]P2P: Receive explore request from: %d, RSSI: -%d dBm, seq: %d\n", 
+            exploreRequestPacket.sourceId, rssi, exploreRequestPacket.seq);
+        DEBUG_PRINT("[Edge-STM32]P2P: Explore request payload: \n");
+        DEBUG_PRINT("[Edge-STM32]P2P: startPoint: (%d, %d, %d)\n", 
+            exploreRequestPacket.exploreRequestPayload.startPoint.x, 
+            exploreRequestPacket.exploreRequestPayload.startPoint.y, 
+            exploreRequestPacket.exploreRequestPayload.startPoint.z);
+
         // Print debugging info
         if (DEBUG_PRINT_ENABLED)
         {
