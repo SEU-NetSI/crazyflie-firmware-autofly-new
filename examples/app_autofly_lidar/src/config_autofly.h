@@ -1,4 +1,3 @@
-
 // Autofly_Main config
 #define OFFSET_X 50
 #define OFFSET_Y 50
@@ -9,7 +8,7 @@
 #define DELAY_START 10000
 #define DELAY_MAPPING 300
 #define DELAY_PRINT 50
-#define TIMEOUT_EXPLORE_RESP 1000
+#define TIMEOUT_EXPLORE_RESP 150
 
 //octomap config
 #define TREE_CENTER_X 128

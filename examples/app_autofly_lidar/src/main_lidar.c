@@ -20,7 +20,9 @@
 #include "crtp_commander_high_level.h"
 
 #define DEBUG_PRINT_ENABLED 1
-
+#define MAX_EXPLORE 120
+#define SEQ_END_EXPLORE 0xffff
+#define RESEND_END_EXPLORE_MAX 3 
 // handle mapping request
 mapping_req_payload_t mappingRequestPayload[MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT];
 static explore_resp_payload_t responsePayload;
@@ -163,10 +165,11 @@ void MoveTo(float x, float y, float z)
 }
 
 // handle explore request
-void setExploreRequestPayload(coordinate_t* startPoint, example_measure_t* measurement)
+void setExploreRequestPayload(coordinate_t* startPoint, example_measure_t* measurement, bool flag_timeout)
 {
     // package explore request
-    exploreRequestSeq++;
+    if(!flag_timeout)
+        exploreRequestSeq++;
     explore_req_payload_t exploreRequestPayload = {*startPoint, *measurement};
     bool flag = sendExploreRequest(&exploreRequestPayload, exploreRequestSeq);
     if(!flag){
@@ -224,7 +227,7 @@ void appMain()
     example_measure_t measurement;
     TickType_t time = xTaskGetTickCount();
     ListeningInit();
-
+    int Resend_END = 0;
     while (1) 
     {
         vTaskDelay(M2T(DELAY_MAPPING));
@@ -235,7 +238,15 @@ void appMain()
         start_pointI.y = (int)(start_pointF.y);
         start_pointI.z = (int)(start_pointF.z);
         // Receive explore response
-        if (flag_explore) 
+        if(exploreRequestSeq == SEQ_END_EXPLORE && Resend_END > RESEND_END_EXPLORE_MAX){
+            break;
+        }
+        if(exploreRequestSeq > MAX_EXPLORE){
+            exploreRequestSeq = SEQ_END_EXPLORE;
+            crtpCommanderHighLevelLand(0, 0.5);
+            vTaskDelay(M2T(DELAY_MOVE));
+        }
+        if (flag_explore)
         {
             lastMoveSeq = exploreRequestSeq;
             MoveTo((float)responsePayload.endPoint.x, (float)responsePayload.endPoint.y, (float)responsePayload.endPoint.z);
@@ -245,7 +256,7 @@ void appMain()
             start_pointI.x = (int)(start_pointF.x);
             start_pointI.y = (int)(start_pointF.y);
             start_pointI.z = (int)(start_pointF.z);
-            setExploreRequestPayload(&start_pointI, &measurement);
+            setExploreRequestPayload(&start_pointI, &measurement, false);
             flag_explore = false;
             // reset time
             time = xTaskGetTickCount();
@@ -253,7 +264,10 @@ void appMain()
         // Not receive explore response and timeout
         else if (xTaskGetTickCount() - time >= TIMEOUT_EXPLORE_RESP) 
         {
-            setExploreRequestPayload(&start_pointI, &measurement);
+            if(exploreRequestSeq == SEQ_END_EXPLORE){
+                Resend_END++;
+            }
+            setExploreRequestPayload(&start_pointI, &measurement,true);
             flag_explore = false;
             // reset time
             time = xTaskGetTickCount();
