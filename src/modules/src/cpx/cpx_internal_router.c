@@ -83,7 +83,7 @@ void cpxInternalRouterRouteIn(const CPXRoutablePacket_t* packet) {
       xQueueSend(crtpQueue, packet, portMAX_DELAY);
       break;
     default:
-      //DEBUG_PRINT("Message on function which is not handled (0x%X)\n", packet->route.function);
+      DEBUG_PRINT("Message on function which is not handled (0x%X)\n", packet->route.function);
   }
 }
 
