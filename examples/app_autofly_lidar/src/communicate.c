@@ -64,3 +64,24 @@ bool sendExploreRequest(explore_req_payload_t* exploreRequestPayloadPtr, uint16_
     // Send the P2P packet
     return radiolinkSendP2PPacketBroadcast(&packet);
 }
+
+bool sendMetricsRequest(metrics_req_payload_t* metricsRequestPayloadPtr, uint16_t metricsRequestSeq)
+{
+    // Initialize the p2p packet
+    static P2PPacket packet;
+    packet.port = 0x00;
+    uint8_t sourceId = getSourceId();
+    uint8_t destinationId = UAV_COMPUTING_ID;
+    // Assemble the packet
+    metrics_req_packet_t metricsReqPacket;
+    metricsReqPacket.sourceId = sourceId;
+    metricsReqPacket.destinationId = destinationId;
+    metricsReqPacket.packetType = METRICS_REQ;
+    metricsReqPacket.seq = metricsRequestSeq;
+    memcpy(&metricsReqPacket.metricsRequestPayload, metricsRequestPayloadPtr, sizeof(metrics_req_payload_t));
+
+    memcpy(&packet.data, &metricsReqPacket, sizeof(metrics_req_packet_t));
+    packet.size = sizeof(metrics_req_packet_t);
+    // Send the P2P packet
+    return radiolinkSendP2PPacketBroadcast(&packet);
+}

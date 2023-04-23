@@ -20,7 +20,7 @@
 #include "crtp_commander_high_level.h"
 
 #define DEBUG_PRINT_ENABLED 1
-#define MAX_EXPLORE 10
+#define MAX_EXPLORE 50
 #define SEQ_END_EXPLORE 0xffff
 #define RESEND_END_EXPLORE_MAX 3 
 // handle mapping request
@@ -30,7 +30,12 @@ bool flag_explore = FALSE;
 uint8_t mappingRequestPayloadCur = 0;
 uint16_t mappingRequestSeq = 0;
 uint16_t exploreRequestSeq = 0;
+uint16_t metricsRequestSeq = 0;
 uint16_t lastMoveSeq = 0xFFFF;
+
+uint16_t mappingRequestCount = 0;
+uint16_t exploreRequestCount = 0;
+uint16_t exploreResponseCount = 0;
 
 void P2PCallbackHandler(P2PPacket *p)
 {
@@ -57,6 +62,7 @@ void P2PCallbackHandler(P2PPacket *p)
         //     exploreRequestSeq);
         return;
     }
+    exploreResponseCount++;
     responsePayload = exploreRespPacket.exploreResponsePayload;
     // memcpy(&responsePayload, &p->data[5], sizeof(explore_resp_payload_t));
 
@@ -130,6 +136,7 @@ void appendMappingRequestPayload(coordinate_t* startPoint, coordinate_t* endPoin
         if(!flag){
             DEBUG_PRINT("[LiDAR-STM32]P2P: Send mapping request failed\n");
         }
+        mappingRequestCount++;
         // print debug info
         // DEBUG_PRINT("[LiDAR-STM32]P2P: Send mapping request %s, seq: %d, payloadLength: %d\n", 
         //     flag == false ? "Failed" : "Successfully", 
@@ -168,11 +175,12 @@ void MoveTo(float x, float y, float z)
 void setExploreRequestPayload(coordinate_t* startPoint, example_measure_t* measurement, bool flag_timeout)
 {
     // package explore request
-    if(!flag_timeout)
+    if (!flag_timeout)
         exploreRequestSeq++;
     explore_req_payload_t exploreRequestPayload = {*startPoint, *measurement};
     bool flag = sendExploreRequest(&exploreRequestPayload, exploreRequestSeq);
-    if(!flag){
+    exploreRequestCount++;
+    if (!flag) {
         DEBUG_PRINT("[LiDAR-STM32]P2P: Send explore request failed\n");
     }
     // print debug info
@@ -198,6 +206,16 @@ void setExploreRequestPayload(coordinate_t* startPoint, example_measure_t* measu
             (double)exploreRequestPayload.measurement.yaw);
         vTaskDelay(M2T(DELAY_PRINT));
     }
+}
+
+void setMetricsRequestPayload()
+{
+    metrics_req_payload_t metricsRequestPayload = { mappingRequestCount, exploreRequestCount, exploreResponseCount };
+    metricsRequestSeq++;
+    bool flag = sendMetricsRequest(&metricsRequestPayload, metricsRequestSeq);
+    DEBUG_PRINT("[LiDAR-STM32]P2P: Send metrics request %s\n", flag == false ? "Failed" : "Successfully");
+    DEBUG_PRINT("[LiDAR-STM32]mReqC: %d, eReqC: %d, eRespC: %d\n", 
+        mappingRequestCount, exploreRequestCount, exploreResponseCount);
 }
 
 void setMapping(coordinateF_t* currentF, example_measure_t* measurement, uint8_t payloadLengthAdaptive){
@@ -239,6 +257,7 @@ void appMain()
         start_pointI.x = (int)(start_pointF.x);
         start_pointI.y = (int)(start_pointF.y);
         start_pointI.z = (int)(start_pointF.z);
+
         // Receive explore response
         if (exploreRequestSeq == SEQ_END_EXPLORE && (Resend_END > RESEND_END_EXPLORE_MAX || flag_explore)){
             break;
@@ -247,6 +266,16 @@ void appMain()
             exploreRequestSeq = SEQ_END_EXPLORE;
             crtpCommanderHighLevelLand(0, 0.5);
             vTaskDelay(M2T(DELAY_MOVE));
+            setMetricsRequestPayload();
+            vTaskDelay(M2T(DELAY_PRINT));
+            setMetricsRequestPayload();
+            vTaskDelay(M2T(DELAY_PRINT));
+            setMetricsRequestPayload();
+            vTaskDelay(M2T(DELAY_PRINT));
+            setMetricsRequestPayload();
+            vTaskDelay(M2T(DELAY_PRINT));
+            setMetricsRequestPayload();
+            vTaskDelay(M2T(DELAY_PRINT));
         }
         if (flag_explore)
         {
