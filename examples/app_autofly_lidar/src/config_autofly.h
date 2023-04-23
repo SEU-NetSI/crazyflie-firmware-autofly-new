@@ -7,9 +7,9 @@
 #define DELAY_MOVE 600
 #define DELAY_TAKEOFF 10000
 #define DELAY_START 3000
-#define DELAY_MAPPING 300
+#define DELAY_MAPPING 200
 #define DELAY_PRINT 50
-#define TIMEOUT_EXPLORE_RESP 250
+#define TIMEOUT_EXPLORE_RESP 200
 
 //octomap config
 #define TREE_CENTER_X 128
@@ -22,7 +22,7 @@
 
 #define LOG_ODDS_OCCUPIED 6
 #define LOG_ODDS_FREE 0
-#define LOG_ODDS_DIFF_STEP 1
+#define LOG_ODDS_DIFF_STEP 3
 
 //auxiliary_tool config
 #define SENSOR_TH 300

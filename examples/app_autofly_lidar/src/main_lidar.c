@@ -20,7 +20,7 @@
 #include "crtp_commander_high_level.h"
 
 #define DEBUG_PRINT_ENABLED 1
-#define MAX_EXPLORE 50
+#define MAX_EXPLORE 120
 // mappingReq and exploreResp cache
 uint8_t mappingRequestPayloadCur = 0;
 mapping_req_payload_t mappingRequestPayload[MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT];
