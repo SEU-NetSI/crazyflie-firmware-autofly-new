@@ -20,7 +20,7 @@
 #include "crtp_commander_high_level.h"
 
 #define DEBUG_PRINT_ENABLED 1
-#define MAX_EXPLORE 120
+#define MAX_EXPLORE 10
 #define SEQ_END_EXPLORE 0xffff
 #define RESEND_END_EXPLORE_MAX 3 
 // handle mapping request
@@ -240,10 +240,10 @@ void appMain()
         start_pointI.y = (int)(start_pointF.y);
         start_pointI.z = (int)(start_pointF.z);
         // Receive explore response
-        if(exploreRequestSeq == SEQ_END_EXPLORE && Resend_END > RESEND_END_EXPLORE_MAX){
+        if (exploreRequestSeq == SEQ_END_EXPLORE && (Resend_END > RESEND_END_EXPLORE_MAX || flag_explore)){
             break;
         }
-        if(exploreRequestSeq > MAX_EXPLORE){
+        if (exploreRequestSeq > MAX_EXPLORE){
             exploreRequestSeq = SEQ_END_EXPLORE;
             crtpCommanderHighLevelLand(0, 0.5);
             vTaskDelay(M2T(DELAY_MOVE));
@@ -251,15 +251,17 @@ void appMain()
         if (flag_explore)
         {
             lastMoveSeq = exploreRequestSeq;
-            MoveTo((float)responsePayload.endPoint.x, (float)responsePayload.endPoint.y, (float)responsePayload.endPoint.z);
-            // get explore request payload
-            get_Current_point(&start_pointF);
-            get_measurement(&measurement, &start_pointF);
-            start_pointI.x = (int)(start_pointF.x);
-            start_pointI.y = (int)(start_pointF.y);
-            start_pointI.z = (int)(start_pointF.z);
-            setExploreRequestPayload(&start_pointI, &measurement, false);
-            flag_explore = false;
+            if (exploreRequestSeq != SEQ_END_EXPLORE) {
+                MoveTo((float)responsePayload.endPoint.x, (float)responsePayload.endPoint.y, (float)responsePayload.endPoint.z);
+                // get explore request payload
+                get_Current_point(&start_pointF);
+                get_measurement(&measurement, &start_pointF);
+                start_pointI.x = (int)(start_pointF.x);
+                start_pointI.y = (int)(start_pointF.y);
+                start_pointI.z = (int)(start_pointF.z);
+                setExploreRequestPayload(&start_pointI, &measurement, false);
+                flag_explore = false;
+            }
             // reset time
             time = xTaskGetTickCount();
         }
