@@ -9,9 +9,6 @@
 #include "radiolink.h"
 #include "configblock.h"
 
-
-
-
 #include "radiolink.h"
 #include "cpx.h"
 #include "cpx_internal_router.h"
@@ -25,6 +22,7 @@
 #define PATH_REQ 3
 #define EXPLORE_RESP 4
 #define PATH_RESP 5
+#define METRICS_REQ 9
 
 #define MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT 4
 #define MAPPING_REQUEST_PAYLOAD_LENGTH_STATIC 4
@@ -64,6 +62,12 @@ typedef struct
     coordinate_t endPoint;
 } explore_resp_payload_t;
 
+typedef struct {
+    uint16_t mappingRequestCount;
+    uint16_t exploreRequestCount;
+    uint16_t exploreResponseCount;
+} metrics_req_payload_t;
+
 typedef struct
 {
     uint8_t sourceId;
@@ -91,6 +95,14 @@ typedef struct
     uint16_t seq;
     explore_resp_payload_t exploreResponsePayload;
 } explore_resp_packet_t;
+
+typedef struct{
+    uint8_t sourceId;
+    uint8_t destinationId;
+    uint8_t packetType;
+    uint16_t seq;
+    metrics_req_payload_t metricsRequestPayload;
+} metrics_req_packet_t;
 
 void CPXForwardInit();
 void P2PListeningInit();

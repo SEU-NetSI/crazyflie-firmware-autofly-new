@@ -123,6 +123,25 @@ void P2PCallbackHandler(P2PPacket *p)
         cpxSendPacketBlockingTimeout(&cpxPacket, 1000);
         // bool flag = cpxSendPacketBlockingTimeout(&cpxPacket, 1000);
         // DEBUG_PRINT("[Edge-STM32]CPX: Forward explore request %s\n\n", flag == false ? "timeout" : "success");
+    } else if (packetType == METRICS_REQ) {
+        metrics_req_packet_t metricsRequestPacket;
+        memcpy(&metricsRequestPacket, p->data, sizeof(metrics_req_packet_t));
+        DEBUG_PRINT("[Edge-STM32]P2P: Receive metrics request from: %d, RSSI: -%d dBm, seq: %d\n", 
+            metricsRequestPacket.sourceId, rssi, metricsRequestPacket.seq);
+        DEBUG_PRINT("[Edge-STM32]P2P: Metrics request payload: \n");
+        DEBUG_PRINT("[Edge-STM32]P2P: Metrics: (%d, %d, %d)\n", 
+            metricsRequestPacket.metricsRequestPayload.mappingRequestCount, 
+            metricsRequestPacket.metricsRequestPayload.exploreRequestCount, 
+            metricsRequestPacket.metricsRequestPayload.exploreResponseCount);
+        
+        // Send msg to GAP8
+        CPXPacket_t cpxPacket;
+        cpxInitRoute(CPX_T_STM32, CPX_T_GAP8, CPX_F_APP, &cpxPacket.route);
+        memcpy(&cpxPacket.data, &metricsRequestPacket, sizeof(metrics_req_packet_t));
+        cpxPacket.dataLength = sizeof(metrics_req_packet_t);
+        cpxSendPacketBlockingTimeout(&cpxPacket, 1000);
+        // bool flag = cpxSendPacketBlockingTimeout(&cpxPacket, 1000);
+        // DEBUG_PRINT("[Edge-STM32]CPX: Forward metrics request %s\n\n", flag == false ? "timeout" : "success");
     } else {
         // DEBUG_PRINT("[Edge-STM32]P2P: Receive unknown packet from: %d, RSSI: -%d dBm, destinationId: %d, packetType: %d\n\n", 
             // sourceId, rssi, destinationId, packetType);
