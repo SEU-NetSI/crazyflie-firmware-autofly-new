@@ -303,7 +303,6 @@ void appMain()
     vTaskDelay(M2T(DELAY_START));
     coordinateF_t start_pointF;
     example_measure_t measurement;
-    TickType_t time = xTaskGetTickCount();
     ListeningInit();
     while (1) 
     {
@@ -327,6 +326,10 @@ void appMain()
             break;
         }
         // set mapping request payload
-        setMapping(&start_pointF, &measurement, MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT);
+        setMapping(&start_pointF, &measurement, 2);
+        vTaskDelay(M2T(DELAY_MAPPING));
+        setMapping(&start_pointF, &measurement, 4);
+        vTaskDelay(M2T(DELAY_MAPPING));
+        setMapping(&start_pointF, &measurement, 3);
     }
 }
