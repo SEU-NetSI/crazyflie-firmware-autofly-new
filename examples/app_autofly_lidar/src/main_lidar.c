@@ -21,7 +21,7 @@
 
 #define DEBUG_PRINT_ENABLED 1
 #define MAX_EXPLORE 100
-#define MAX_MAPPING 500
+#define MAX_MAPPING 1000
 // mappingReq and exploreResp cache
 uint8_t mappingRequestPayloadCur = 0;
 mapping_req_payload_t mappingRequestPayload[MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT];
@@ -211,86 +211,34 @@ void setMapping(coordinateF_t* currentF, example_measure_t* measurement, uint8_t
     start_point.y = (int)(currentF->y);
     start_point.z = (int)(currentF->z);
 
-    for (rangeDirection_t dir = rangeFront; dir <= rangeDown; ++dir)
+    // only send front ranging data for packet loss experiment
+    rangeDirection_t dir = rangeFront;
+    if (cal_Point(measurement, currentF, dir, &item_end))
     {
-        if (cal_Point(measurement, currentF, dir, &item_end))
-        {
-            end_point.x = item_end.x;
-            end_point.y = item_end.y;
-            end_point.z = item_end.z;
-            appendMappingRequestPayload(&start_point, &end_point, payloadLengthAdaptive);
-        }
+        end_point.x = item_end.x;
+        end_point.y = item_end.y;
+        end_point.z = item_end.z;
+        appendMappingRequestPayload(&start_point, &end_point, payloadLengthAdaptive);
     }
+
+    // for (rangeDirection_t dir = rangeFront; dir <= rangeDown; ++dir)
+    // {
+    //     if (cal_Point(measurement, currentF, dir, &item_end))
+    //     {
+    //         end_point.x = item_end.x;
+    //         end_point.y = item_end.y;
+    //         end_point.z = item_end.z;
+    //         appendMappingRequestPayload(&start_point, &end_point, payloadLengthAdaptive);
+    //     }
+    // }
 }
 
-void appMain()
-{
-    vTaskDelay(M2T(DELAY_TAKEOFF));
-    crtpCommanderHighLevelTakeoff(0.4, 2.0);
-    vTaskDelay(M2T(DELAY_START));
-    coordinate_t start_pointI;
-    coordinateF_t start_pointF;
-    example_measure_t measurement;
-    TickType_t time = xTaskGetTickCount();
-    ListeningInit();
-    while (1) 
-    {
-        vTaskDelay(M2T(DELAY_MAPPING));
-        // get explore request payload
-        get_Current_point(&start_pointF);
-        get_measurement(&measurement,&start_pointF);
-        start_pointI.x = (int)(start_pointF.x);
-        start_pointI.y = (int)(start_pointF.y);
-        start_pointI.z = (int)(start_pointF.z);
-
-        if (exploreRequestSeq > MAX_EXPLORE){
-            crtpCommanderHighLevelLand(0, 0.5);
-            vTaskDelay(M2T(DELAY_MOVE));
-            setMetricsRequestPayload();
-            vTaskDelay(M2T(DELAY_PRINT));
-            setMetricsRequestPayload();
-            vTaskDelay(M2T(DELAY_PRINT));
-            setMetricsRequestPayload();
-            vTaskDelay(M2T(DELAY_PRINT));
-            setMetricsRequestPayload();
-            vTaskDelay(M2T(DELAY_PRINT));
-            setMetricsRequestPayload();
-            vTaskDelay(M2T(DELAY_PRINT));
-            break;
-        }
-        if (canExplore)
-        {
-            MoveTo((float)responsePayload.endPoint.x, (float)responsePayload.endPoint.y, (float)responsePayload.endPoint.z);
-            // get explore request payload
-            get_Current_point(&start_pointF);
-            get_measurement(&measurement, &start_pointF);
-            start_pointI.x = (int)(start_pointF.x);
-            start_pointI.y = (int)(start_pointF.y);
-            start_pointI.z = (int)(start_pointF.z);
-            setExploreRequestPayload(&start_pointI, &measurement, false);
-            canExplore = false;
-            // reset time
-            time = xTaskGetTickCount();
-        }
-        // Not receive explore response and timeout
-        else if (xTaskGetTickCount() - time >= TIMEOUT_EXPLORE_RESP) 
-        {
-            setExploreRequestPayload(&start_pointI, &measurement,true);
-            canExplore = false;
-            // reset time
-            time = xTaskGetTickCount();
-        }
-        setMapping(&start_pointF, &measurement, MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT);
-        // set mapping request payload
-    }
-}
-
-
-// packet loss experiment
-// Remember to clost other directions' measurement except front
 // void appMain()
 // {
+//     vTaskDelay(M2T(DELAY_TAKEOFF));
+//     crtpCommanderHighLevelTakeoff(0.4, 2.0);
 //     vTaskDelay(M2T(DELAY_START));
+//     coordinate_t start_pointI;
 //     coordinateF_t start_pointF;
 //     example_measure_t measurement;
 //     TickType_t time = xTaskGetTickCount();
@@ -300,9 +248,13 @@ void appMain()
 //         vTaskDelay(M2T(DELAY_MAPPING));
 //         // get explore request payload
 //         get_Current_point(&start_pointF);
-//         get_measurement(&measurement, &start_pointF);
+//         get_measurement(&measurement,&start_pointF);
+//         start_pointI.x = (int)(start_pointF.x);
+//         start_pointI.y = (int)(start_pointF.y);
+//         start_pointI.z = (int)(start_pointF.z);
 
-//         if (mappingRequestSeq > MAX_MAPPING){
+//         if (exploreRequestSeq > MAX_EXPLORE){
+//             crtpCommanderHighLevelLand(0, 0.5);
 //             vTaskDelay(M2T(DELAY_MOVE));
 //             setMetricsRequestPayload();
 //             vTaskDelay(M2T(DELAY_PRINT));
@@ -316,7 +268,65 @@ void appMain()
 //             vTaskDelay(M2T(DELAY_PRINT));
 //             break;
 //         }
-//         // set mapping request payload
+//         if (canExplore)
+//         {
+//             MoveTo((float)responsePayload.endPoint.x, (float)responsePayload.endPoint.y, (float)responsePayload.endPoint.z);
+//             // get explore request payload
+//             get_Current_point(&start_pointF);
+//             get_measurement(&measurement, &start_pointF);
+//             start_pointI.x = (int)(start_pointF.x);
+//             start_pointI.y = (int)(start_pointF.y);
+//             start_pointI.z = (int)(start_pointF.z);
+//             setExploreRequestPayload(&start_pointI, &measurement, false);
+//             canExplore = false;
+//             // reset time
+//             time = xTaskGetTickCount();
+//         }
+//         // Not receive explore response and timeout
+//         else if (xTaskGetTickCount() - time >= TIMEOUT_EXPLORE_RESP) 
+//         {
+//             setExploreRequestPayload(&start_pointI, &measurement,true);
+//             canExplore = false;
+//             // reset time
+//             time = xTaskGetTickCount();
+//         }
 //         setMapping(&start_pointF, &measurement, MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT);
+//         // set mapping request payload
 //     }
 // }
+
+
+// packet loss experiment
+// Remember to clost other directions' measurement except front
+void appMain()
+{
+    vTaskDelay(M2T(DELAY_START));
+    coordinateF_t start_pointF;
+    example_measure_t measurement;
+    TickType_t time = xTaskGetTickCount();
+    ListeningInit();
+    while (1) 
+    {
+        vTaskDelay(M2T(DELAY_MAPPING));
+        // get explore request payload
+        get_Current_point(&start_pointF);
+        get_measurement(&measurement, &start_pointF);
+
+        if (mappingRequestSeq > MAX_MAPPING){
+            vTaskDelay(M2T(DELAY_MOVE));
+            setMetricsRequestPayload();
+            vTaskDelay(M2T(DELAY_PRINT));
+            setMetricsRequestPayload();
+            vTaskDelay(M2T(DELAY_PRINT));
+            setMetricsRequestPayload();
+            vTaskDelay(M2T(DELAY_PRINT));
+            setMetricsRequestPayload();
+            vTaskDelay(M2T(DELAY_PRINT));
+            setMetricsRequestPayload();
+            vTaskDelay(M2T(DELAY_PRINT));
+            break;
+        }
+        // set mapping request payload
+        setMapping(&start_pointF, &measurement, MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT);
+    }
+}
