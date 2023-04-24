@@ -306,11 +306,6 @@ void appMain()
     ListeningInit();
     while (1) 
     {
-        vTaskDelay(M2T(DELAY_MAPPING));
-        // get explore request payload
-        get_Current_point(&start_pointF);
-        get_measurement(&measurement, &start_pointF);
-
         if (mappingRequestSeq > MAX_MAPPING){
             vTaskDelay(M2T(DELAY_MOVE));
             setMetricsRequestPayload();
@@ -326,10 +321,17 @@ void appMain()
             break;
         }
         // set mapping request payload
+        get_Current_point(&start_pointF);
+        get_measurement(&measurement, &start_pointF);
         setMapping(&start_pointF, &measurement, 2);
         vTaskDelay(M2T(DELAY_MAPPING));
-        setMapping(&start_pointF, &measurement, 4);
+        get_Current_point(&start_pointF);
+        get_measurement(&measurement, &start_pointF);
+        setMapping(&start_pointF, &measurement, 1);
         vTaskDelay(M2T(DELAY_MAPPING));
+        get_Current_point(&start_pointF);
+        get_measurement(&measurement, &start_pointF);
         setMapping(&start_pointF, &measurement, 3);
+        vTaskDelay(M2T(DELAY_MAPPING));
     }
 }
