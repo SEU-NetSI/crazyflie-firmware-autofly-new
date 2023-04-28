@@ -13,12 +13,13 @@
 
 #include "communicate.h"
 
+static uint8_t lidarUavId = 0x00;
 uint8_t getSourceId()
 {
-    uint64_t address = configblockGetRadioAddress();
-    uint8_t sourceId = (uint8_t)((address) & 0x00000000ff);
-    return sourceId;
-    // return UAV_LIDAR_ID;
+    // uint64_t address = configblockGetRadioAddress();
+    // uint8_t sourceId = (uint8_t)((address) & 0x00000000ff);
+    // return sourceId;
+    return lidarUavId;
 }
 
 bool sendMappingRequest(mapping_req_payload_t* mappingRequestPayloadPtr, uint8_t mappingRequestPayloadLength, uint16_t mappingRequestSeq) 
@@ -40,6 +41,15 @@ bool sendMappingRequest(mapping_req_payload_t* mappingRequestPayloadPtr, uint8_t
     // DEBUG_PRINT("sizeof(mapping_req_packet_t):%d\n",sizeof(mapping_req_packet_t)); # 36
     memcpy(&packet.data, &mappingReqPacket, sizeof(mapping_req_packet_t));
     packet.size = sizeof(mapping_req_packet_t);
+    DEBUG_PRINT("[sendMappingRequest]seq: %d, length: %d, size: %d\n", mappingRequestSeq, mappingRequestPayloadLength, packet.size);
+    for (int i = 0; i < mappingRequestPayloadLength; i++)
+    {
+        DEBUG_PRINT("payload: x: %d, y: %d, z: %d, mn: %d\n", 
+            mappingRequestPayloadPtr[i].startPoint.x, 
+            mappingRequestPayloadPtr[i].startPoint.y, 
+            mappingRequestPayloadPtr[i].startPoint.z,
+            mappingRequestPayloadPtr[i].mergedNums);
+    }
     // Send the P2P packet
     return radiolinkSendP2PPacketBroadcast(&packet);
 }
