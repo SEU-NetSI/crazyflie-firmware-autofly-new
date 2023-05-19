@@ -18,8 +18,6 @@
 #define MAPPING_REQUEST_PAYLOAD_LENGTH_MOVING 1
 #define UAV_COMPUTING_ID 0x7E
 
-static uint8_t lidarUavId;
-
 typedef struct
 {
     uint16_t x;
