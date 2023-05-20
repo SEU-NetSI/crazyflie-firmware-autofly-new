@@ -11,8 +11,7 @@
 #define DELAY_PRINT 50
 #define DELAY_WAIT 100
 #define TIMEOUT_EXPLORE_RESP 250
-#define STRIDE 8
-#define RELIABILITY_DISTANCE STRIDE * 3 > 16? STRIDE * 3 : 16
+#define RELIABILITY_DISTANCE 24
 
 //octomap config
 #define TREE_CENTER_X 128

@@ -230,6 +230,9 @@ void exploreTask() {
     vTaskDelay(M2T(DELAY_START));
     coordinate_t start_pointI;
     coordinateF_t start_pointF,item_pointF;
+    start_pointF.x = 0;
+    start_pointF.y = 0;
+    start_pointF.z = 0;
     item_pointF = start_pointF;
     example_measure_t measurement;
     TickType_t time = xTaskGetTickCount();
@@ -245,7 +248,9 @@ void exploreTask() {
         while(!ReliabilityTest(&start_pointF, &item_pointF)){
             get_Current_point(&item_pointF);
             vTaskDelay(M2T(DELAY_WAIT));
+            DEBUG_PRINT("[LiDAR-STM32]P2P: ReliabilityTest failed\n");
         }
+        DEBUG_PRINT("[LiDAR-STM32]P2P: ReliabilityTest passed,SP:(%.2f,%.2f,%.2f)\n",(double)start_pointF.x,(double)start_pointF.y,(double)start_pointF.z);
         start_pointF = item_pointF;
         get_measurement(&measurement, &start_pointF);
         start_pointI.x = (int)(start_pointF.x);
