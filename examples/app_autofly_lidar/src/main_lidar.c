@@ -268,11 +268,11 @@ void exploreTask() {
         {
             MoveTo((float)responsePayload.endPoint.x, (float)responsePayload.endPoint.y, (float)responsePayload.endPoint.z);
             // get explore request payload
-            get_Current_point(&start_pointF);
-            get_measurement(&measurement, &start_pointF);
-            start_pointI.x = (int)(start_pointF.x);
-            start_pointI.y = (int)(start_pointF.y);
-            start_pointI.z = (int)(start_pointF.z);
+            // get_Current_point(&start_pointF);
+            // get_measurement(&measurement, &start_pointF);
+            // start_pointI.x = (int)(start_pointF.x);
+            // start_pointI.y = (int)(start_pointF.y);
+            // start_pointI.z = (int)(start_pointF.z);
             setExploreRequestPayload(&start_pointI, &measurement, false);
             canExplore = false;
             // reset time
