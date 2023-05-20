@@ -38,6 +38,11 @@ void get_Current_point(coordinateF_t* cureent_point){
     cureent_point->z = 100 * logGetFloat(logGetVarId("stateEstimate", "z")) + OFFSET_Z;      
 }
 
+bool ReliabilityTest(coordinateF_t* last, coordinateF_t* cur){
+    return abs(last->x-cur->x)+abs(last->y-cur->y)+abs(last->z-cur->z) < RELIABILITY_DISTANCE;
+}
+
+
 bool cal_Point(example_measure_t *measurement, coordinateF_t *start_point, rangeDirection_t dir, coordinateF_t *res)
 {
     float pitch = -1 * measurement->pitch;

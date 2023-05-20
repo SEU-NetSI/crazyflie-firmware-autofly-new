@@ -17,7 +17,7 @@ typedef struct
 
 void get_measurement(example_measure_t *measurement,coordinateF_t* cureent_point);
 void get_Current_point(coordinateF_t* cureent_point);
-
+bool ReliabilityTest(coordinateF_t* last, coordinateF_t* cur);
 bool cal_Point(example_measure_t* measurement,coordinateF_t* start_point,rangeDirection_t dir,coordinateF_t* res); 
 
 coordinateF_t rot(float roll, float pitch, float yaw, coordinateF_t* origin, coordinateF_t* point);

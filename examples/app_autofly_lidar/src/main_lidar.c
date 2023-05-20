@@ -229,7 +229,8 @@ void exploreTask() {
     crtpCommanderHighLevelTakeoff(0.4, 2.0);
     vTaskDelay(M2T(DELAY_START));
     coordinate_t start_pointI;
-    coordinateF_t start_pointF;
+    coordinateF_t start_pointF,item_pointF;
+    item_pointF = start_pointF;
     example_measure_t measurement;
     TickType_t time = xTaskGetTickCount();
     ListeningInit();
@@ -240,14 +241,17 @@ void exploreTask() {
         start_pointI.x = 300;
         start_pointI.y = 300;
         start_pointI.z = 300;
-        while (start_pointI.x >= 300 || start_pointI.x <= -300 || start_pointI.y >= 300 || start_pointI.y <= -300 || start_pointI.z >= 300 || start_pointI.z <= -300) {
-            get_Current_point(&start_pointF);
-            get_measurement(&measurement, &start_pointF);
-            start_pointI.x = (int)(start_pointF.x);
-            start_pointI.y = (int)(start_pointF.y);
-            start_pointI.z = (int)(start_pointF.z);
-            vTaskDelay(M2T(DELAY_PRINT));
+        get_Current_point(&item_pointF);
+        while(!ReliabilityTest(&start_pointF, &item_pointF)){
+            get_Current_point(&item_pointF);
+            vTaskDelay(M2T(DELAY_WAIT));
         }
+        start_pointF = item_pointF;
+        get_measurement(&measurement, &start_pointF);
+        start_pointI.x = (int)(start_pointF.x);
+        start_pointI.y = (int)(start_pointF.y);
+        start_pointI.z = (int)(start_pointF.z);
+        vTaskDelay(M2T(DELAY_PRINT));
 
         if (exploreRequestSeq > MAX_EXPLORE) {
             crtpCommanderHighLevelLand(0, 0.5);
