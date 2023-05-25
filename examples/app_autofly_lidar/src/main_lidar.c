@@ -228,36 +228,39 @@ void exploreTask() {
     vTaskDelay(M2T(DELAY_TAKEOFF));
     crtpCommanderHighLevelTakeoff(0.4, 2.0);
     vTaskDelay(M2T(DELAY_START));
-    coordinate_t start_pointI;
-    coordinateF_t start_pointF,item_pointF;
+
+    coordinate_t start_pointI = {300, 300, 300};
+    coordinateF_t start_pointF, item_pointF;
     start_pointF.x = 0;
     start_pointF.y = 0;
     start_pointF.z = 0;
     item_pointF = start_pointF;
     example_measure_t measurement;
+
     TickType_t time = xTaskGetTickCount();
     ListeningInit();
     while (1) 
     {
         vTaskDelay(M2T(DELAY_MAPPING));
-        // get explore request payload
-        start_pointI.x = 300;
-        start_pointI.y = 300;
-        start_pointI.z = 300;
+        // Get current correct position
         get_Current_point(&item_pointF);
-        while(!ReliabilityTest(&start_pointF, &item_pointF)){
+        while (!ReliabilityTest(&start_pointF, &item_pointF)) {
             get_Current_point(&item_pointF);
             vTaskDelay(M2T(DELAY_WAIT));
-            DEBUG_PRINT("[LiDAR-STM32]P2P: ReliabilityTest failed\n");
+            DEBUG_PRINT("[LiDAR-STM32]Task: ReliabilityTest failed\n");
         }
-        DEBUG_PRINT("[LiDAR-STM32]P2P: ReliabilityTest passed,SP:(%.2f,%.2f,%.2f)\n",(double)start_pointF.x,(double)start_pointF.y,(double)start_pointF.z);
+        DEBUG_PRINT("[LiDAR-STM32]Task: ReliabilityTest passed, SP:(%.2f,%.2f,%.2f)\n", 
+            (double)start_pointF.x, (double)start_pointF.y, (double)start_pointF.z);
         start_pointF = item_pointF;
+
+        // Get measurement
         get_measurement(&measurement, &start_pointF);
         start_pointI.x = (int)(start_pointF.x);
         start_pointI.y = (int)(start_pointF.y);
         start_pointI.z = (int)(start_pointF.z);
         vTaskDelay(M2T(DELAY_PRINT));
 
+        // Finish exploring
         if (exploreRequestSeq > MAX_EXPLORE) {
             crtpCommanderHighLevelLand(0, 0.5);
             vTaskDelay(M2T(DELAY_MOVE));
@@ -276,18 +279,12 @@ void exploreTask() {
         if (canExplore)
         {
             MoveTo((float)responsePayload.endPoint.x, (float)responsePayload.endPoint.y, (float)responsePayload.endPoint.z);
-            // get explore request payload
-            // get_Current_point(&start_pointF);
-            // get_measurement(&measurement, &start_pointF);
-            // start_pointI.x = (int)(start_pointF.x);
-            // start_pointI.y = (int)(start_pointF.y);
-            // start_pointI.z = (int)(start_pointF.z);
             setExploreRequestPayload(&start_pointI, &measurement, false);
             canExplore = false;
             // reset time
             time = xTaskGetTickCount();
         }
-        // Not receive explore response and timeout
+        // Explore response timeout
         else if (xTaskGetTickCount() - time >= TIMEOUT_EXPLORE_RESP) 
         {
             setExploreRequestPayload(&start_pointI, &measurement,true);
@@ -295,8 +292,8 @@ void exploreTask() {
             // reset time
             time = xTaskGetTickCount();
         }
-        setMapping(&start_pointF, &measurement, MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT);
         // set mapping request payload
+        setMapping(&start_pointF, &measurement, MAPPING_REQUEST_PAYLOAD_LENGTH_LIMIT);
     }
 }
 

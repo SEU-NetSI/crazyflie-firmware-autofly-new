@@ -41,7 +41,7 @@ void get_Current_point(coordinateF_t* cureent_point){
 bool ReliabilityTest(coordinateF_t* last, coordinateF_t* cur){
     bool res = true;
     static bool first = true;
-    res &= abs(last->x-cur->x)+abs(last->y-cur->y)+abs(last->z-cur->z) < RELIABILITY_DISTANCE || first;
+    res &= abs(last->x - cur->x) + abs(last->y - cur->y) + abs(last->z - cur->z) < RELIABILITY_DISTANCE || first;
     res &= abs(cur->x) <= WIDTH_X;
     res &= abs(cur->y) <= WIDTH_Y;
     res &= abs(cur->z) <= WIDTH_Z;
